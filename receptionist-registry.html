@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Sentinel SOS">
+    <link rel="apple-touch-icon" href="logo.png">
+    <title>VGN: Reception Registry</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        .box { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
+        h2 { color: #1a237e; margin-top: 0; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
+        button { width: 100%; padding: 15px; background: #1a237e; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        .log-table { width: 100%; max-width: 500px; margin-top: 30px; border-collapse: collapse; background: white; }
+        .log-table th, .log-table td { padding: 12px; border: 1px solid #eee; text-align: left; }
+        .status-badge { padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; background: #e8f5e9; color: #2e7d32; }
+
+        @media print {
+            body * { visibility: hidden; }
+            #printablePass, #printablePass * { visibility: visible; }
+            #printablePass { 
+                position: absolute; 
+                left: 0; top: 0; 
+                width: 300px; 
+                border: 2px solid #000; 
+                padding: 20px;
+                text-align: center;
+            }
+            #actualPrintBtn { display: none; }
+        }
+
+        #printablePass {
+            display: none;
+            background: white;
+            margin-top: 20px;
+            border: 1px dashed #1a237e;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            width: 300px;
+        }
+    </style>
+
+    <link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1a237e">
+
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js')
+        .then(reg => console.log('Sentinel PWA: Active'))
+        .catch(err => console.log('PWA Error', err));
+    });
+  }
+</script>
+
+</head>
+<body>
+    <div class="box">
+        <h2>🛡️ Reception Registry</h2>
+        <p>Assign Physical Card to Guest</p>
+        <input type="text" id="cardID" placeholder="Card Number (e.g., 001)">
+        <input type="text" id="guestName" placeholder="Guest Full Name">
+        <input type="text" id="visitPurpose" placeholder="Purpose / Office No.">
+        <button onclick="assignCard()">LINK & ACTIVATE CARD</button>
+    </div>
+
+    <div id="printablePass">
+        <h3 style="margin:0; color:#1a237e;">VGN SECURITY</h3>
+        <p style="font-size: 12px; margin: 5px 0;">OFFICIAL VISITOR PASS</p>
+        <div id="printQR" style="margin: 10px auto; display: inline-block;"></div>
+        <h2 id="printGuestName" style="margin: 5px 0;"></h2>
+        <p id="printDetails" style="font-size: 14px;"></p>
+        <p style="font-size: 10px; color: #666;">Valid for today only</p>
+        <button onclick="window.print()" id="actualPrintBtn" style="background:#4caf50; color:white; border:none; padding:10px; border-radius:5px;">Print Now</button>
+    </div>
+
+    <table class="log-table" id="logTable">
+        <thead>
+            <tr><th>Card</th><th>Guest</th><th>Status</th><th>Action</th></tr>
+        </thead>
+        <tbody id="logBody"></tbody>
+    </table>
+
+    <script>
+        function assignCard() {
+            const id = document.getElementById('cardID').value;
+            const name = document.getElementById('guestName').value;
+            const purpose = document.getElementById('visitPurpose').value;
+
+            if(!id || !name) return alert("Fill Name and Card ID");
+
+            let registry = JSON.parse(localStorage.getItem('vgn_registry') || '{}');
+            registry[id] = { name, purpose, time: new Date().toLocaleTimeString(), status: 'ACTIVE' };
+            localStorage.setItem('vgn_registry', JSON.stringify(registry));
+
+            // Setup Pass for Printing
+            document.getElementById('printablePass').style.display = 'block';
+            document.getElementById('printGuestName').innerText = name;
+            document.getElementById('printDetails').innerText = `Destination: ${purpose}`;
+            
+            // Generate the QR
+            const printQRContainer = document.getElementById('printQR');
+            printQRContainer.innerHTML = "";
+            new QRCode(printQRContainer, { 
+                text: id, 
+                width: 120, 
+                height: 120,
+                colorDark : "#000000",
+                colorLight : "#ffffff"
+            });
+
+            updateTable();
+
+            // Reset inputs for next guest
+            document.getElementById('cardID').value = "";
+            document.getElementById('guestName').value = "";
+            document.getElementById('visitPurpose').value = "";
+        } // Closed correctly here
+
+        function updateTable() {
+            const registry = JSON.parse(localStorage.getItem('vgn_registry') || '{}');
+            const tbody = document.getElementById('logBody');
+            tbody.innerHTML = "";
+            for (let id in registry) {
+                tbody.innerHTML += `<tr>
+                    <td><b>${id}</b></td>
+                    <td>${registry[id].name}</td>
+                    <td><span class="status-badge">${registry[id].status}</span></td>
+                    <td><button onclick="clearCard('${id}')" style="background:red; color:white; border:none; padding:5px; border-radius:3px; font-size:10px;">End</button></td>
+                </tr>`;
+            }
+        }
+
+        function clearCard(id) {
+            let registry = JSON.parse(localStorage.getItem('vgn_registry') || '{}');
+            delete registry[id];
+            localStorage.setItem('vgn_registry', JSON.stringify(registry));
+            updateTable();
+            document.getElementById('printablePass').style.display = 'none';
+        }
+
+        window.onload = updateTable;
+    </script>
+</body>
+</html>
