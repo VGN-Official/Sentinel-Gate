@@ -1,6 +1,6 @@
 const CACHE_NAME = 'sentinel-v1';
 const ASSETS_TO_CACHE = [
-  './marshal-scanner.html',
+  './index.html',
   './reception-registry.html',
   './manifest.json',
   'https://unpkg.com/html5-qrcode',
