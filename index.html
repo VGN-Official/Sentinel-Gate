@@ -88,25 +88,26 @@ function start() {
 }
 
 function onScanSuccess(decodedText) {
-    // Immediate feedback
-    console.log("Scan successful:", decodedText);
-    
     scanner.stop().then(() => {
         reader.style.display = 'none';
         panel.style.display = 'block';
 
-        const registry = JSON.parse(localStorage.getItem('vgn_registry') || '{}');
-        
-        // Match logic
-        if (registry[decodedText]) {
-            const guest = registry[decodedText];
-            showResult("✅ ACCESS GRANTED", `Guest: ${guest.name}\nOffice: ${guest.purpose}`, "panel granted");
-        } else if (decodedText.startsWith("VGN-GATE")) {
-            const parts = decodedText.split('|');
-            showResult("✅ ACCESS GRANTED", `Guest: ${parts[1]}\nOffice: ${parts[2]}`, "panel granted");
+        // 1. Check if the code is one of YOUR cards (e.g., starts with 'NCoS' or is a number)
+        // We will assume your cards are numbered 001, 002, etc.
+        const isOfficialCard = !isNaN(decodedText) || decodedText.startsWith("NCoS");
+
+        if (isOfficialCard) {
+            panel.className = "panel granted";
+            document.getElementById('status-title').innerText = "✅ VALID CARD DETECTED";
+            document.getElementById('visitor-details').innerText = `Card ID: ${decodedText}\nStatus: Verified Physical Asset`;
+            saveLog(decodedText, "ENTRY_SCAN");
         } else {
-            showResult("❌ UNAUTHORIZED", `Scanned ID: ${decodedText}\nStatus: Not Active`, "panel denied");
+            panel.className = "panel denied";
+            document.getElementById('status-title').innerText = "❌ UNKNOWN CODE";
+            document.getElementById('visitor-details').innerText = `Scanned: ${decodedText}\nStatus: Not an NHQ Issued Card`;
         }
+        
+        document.getElementById('timestamp').innerText = "Logged: " + new Date().toLocaleString();
     });
 }
 
