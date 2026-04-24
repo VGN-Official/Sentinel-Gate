@@ -4,14 +4,14 @@
   "description": "Professional SOS and Access Control Terminal",
   "icons": [
     {
-      "src": "logo.png",
-      "type": "image/png",
+      "src": "logo.jpg",
+      "type": "image/jpg",
       "sizes": "192x192",
       "purpose": "any maskable"
     },
     {
-      "src": "logo.png",
-      "type": "image/png",
+      "src": "logo.jpg",
+      "type": "image/jpg",
       "sizes": "512x512",
       "purpose": "any maskable"
     }
