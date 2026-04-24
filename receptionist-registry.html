@@ -16,20 +16,39 @@
         .log-table th, .log-table td { padding: 12px; border: 1px solid #eee; text-align: left; }
         .status-badge { padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; background: #e8f5e9; color: #2e7d32; }
 
-        @media print {
-            body * { visibility: hidden; }
-            #printablePass, #printablePass * { visibility: visible; }
-            #printablePass { 
-                position: absolute; 
-                left: 0; top: 0; 
-                width: 300px; 
-                border: 2px solid #000; 
-                padding: 10px;
-                text-align: center;
-                background: white;
-            }
-            #actualPrintBtn { display: none; } /* Hide the button itself when printing */
-        }
+       @media print {
+    body * { visibility: hidden; }
+    #printablePass, #printablePass * { visibility: visible; }
+    #printablePass { 
+        position: absolute; 
+        left: 0; 
+        top: 0; 
+        /* Precision Sizing */
+        width: 2.5in; 
+        height: 3.5in; 
+        border: 1px solid #000; /* Thin border to help with cutting */
+        padding: 0.1in;
+        text-align: center;
+        background: white;
+        box-sizing: border-box; /* Ensures padding doesn't add to the size */
+        page-break-inside: avoid;
+    }
+    #actualPrintBtn { display: none; }
+}
+
+/* On-screen view styling */
+#printablePass {
+    display: none;
+    background: white;
+    margin-top: 20px;
+    border: 2px solid #333;
+    padding: 15px;
+    border-radius: 10px;
+    width: 2.5in; /* Matches the physical card width */
+    height: 3.5in;
+    text-align: center;
+    box-sizing: border-box;
+}
 
         /* NCoS HQ PASS STYLING */
         #printablePass {
