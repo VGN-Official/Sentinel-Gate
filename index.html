@@ -2,137 +2,22 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VGN: Marshal Terminal</title>
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Sentinel SOS">
-    <link rel="apple-touch-icon" href="logo.jpg">
-    <script src="https://unpkg.com/html5-qrcode"></script>
+    <title>VGN Sentinel Gateway</title>
     <style>
-        body { font-family: sans-serif; background: #121212; color: white; text-align: center; margin: 0; padding: 20px; }
-        #reader { width: 100%; max-width: 450px; margin: 20px auto; border-radius: 15px; overflow: hidden; border: 2px solid #333; }
-        .panel { display: none; padding: 30px; border-radius: 20px; margin-top: 20px; }
-        .granted { background: #1b5e20; border: 5px solid #4caf50; }
-        .denied { background: #b71c1c; border: 5px solid #f44336; }
-        .btn-reset { background: white; color: black; padding: 15px 30px; border-radius: 10px; font-weight: bold; border: none; margin-top: 20px; cursor: pointer; }
+        body { font-family: sans-serif; text-align: center; padding: 50px; background: #f4f7f6; }
+        .btn { 
+            display: block; width: 250px; margin: 20px auto; padding: 20px; 
+            background: #1a237e; color: white; text-decoration: none; 
+            border-radius: 10px; font-weight: bold; font-size: 1.2rem;
+        }
+        .scanner { background: #2e7d32; }
     </style>
-
-        <link rel="manifest" href="manifest.json">
-        <meta name="theme-color" content="#1a237e">
-
-<script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js')
-        .then(reg => console.log('Sentinel PWA: Active', reg.scope))
-        .catch(err => console.log('Sentinel PWA: Offline Failure', err));
-    });
-  }
-</script>
-
 </head>
 <body>
-    <header>
-    <h2 style="color: #448aff;">🛡️ MARSHAL TERMINAL</h2>
-    <div style="margin-bottom: 20px;">
-        <button onclick="start()" style="background: #2e7d32; color: white; padding: 10px 20px; border: none; border-radius: 5px;">START CAMERA</button>
-        <button onclick="stopCamera()" style="background: #c62828; color: white; padding: 10px 20px; border: none; border-radius: 5px;">STOP CAMERA</button>
-    </div>
-    <p id="instruction-text">Manual Control Active</p>
-</header>
-
-    <div id="reader" style="width: 100%; max-width: 500px; margin: auto;"></div>
-
-    <div id="result-panel" class="panel">
-        <h1 id="status-title"></h1>
-        <p id="visitor-details" style="font-size: 1.2rem;"></p>
-        <hr style="opacity: 0.2;">
-        <p id="timestamp" style="font-size: 0.8rem;"></p>
-        <button class="btn-reset" onclick="resetScanner()">SCAN NEXT GUEST</button>
-    </div>
-
-    <audio id="successSound" src="https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3"></audio>
-
-    <script>
-
-  // Ensure scanner is defined globally
-const scanner = new Html5Qrcode("reader");
-const panel = document.getElementById('result-panel');
-const reader = document.getElementById('reader');
-
-function start() {
-    // Show the reader div if it was hidden
-    reader.style.display = 'block';
-    panel.style.display = 'none';
-
-    Html5Qrcode.getCameras().then(cameras => {
-        if (cameras && cameras.length > 0) {
-            // If multiple cameras (like on a phone), use the back one (index 0 or 1)
-            const cameraId = cameras.length > 1 ? cameras[1].id : cameras[0].id;
-            
-            scanner.start(
-                cameraId, 
-                { fps: 10, qrbox: { width: 250, height: 250 } },
-                onScanSuccess
-            ).catch(err => {
-                console.error("Scanner failed to start:", err);
-                alert("Camera permission denied or camera in use.");
-            });
-        } else {
-            alert("No cameras found on this device.");
-        }
-    }).catch(err => {
-        console.error("Error getting cameras:", err);
-    });
-}
-
-function onScanSuccess(decodedText) {
-    scanner.stop().then(() => {
-        reader.style.display = 'none';
-        panel.style.display = 'block';
-
-        // 1. Check if the code is one of YOUR cards (e.g., starts with 'NCoS' or is a number)
-        // We will assume your cards are numbered 001, 002, etc.
-        const isOfficialCard = !isNaN(decodedText) || decodedText.startsWith("NCoS");
-
-        if (isOfficialCard) {
-            panel.className = "panel granted";
-            document.getElementById('status-title').innerText = "✅ VALID CARD DETECTED";
-            document.getElementById('visitor-details').innerText = `Card ID: ${decodedText}\nStatus: Verified Physical Asset`;
-            saveLog(decodedText, "ENTRY_SCAN");
-        } else {
-            panel.className = "panel denied";
-            document.getElementById('status-title').innerText = "❌ UNKNOWN CODE";
-            document.getElementById('visitor-details').innerText = `Scanned: ${decodedText}\nStatus: Not an NHQ Issued Card`;
-        }
-        
-        document.getElementById('timestamp').innerText = "Logged: " + new Date().toLocaleString();
-    });
-}
-
-function showResult(title, details, className) {
-    document.getElementById('status-title').innerText = title;
-    document.getElementById('visitor-details').innerText = details;
-    document.getElementById('result-panel').className = "panel " + className;
-    document.getElementById('timestamp').innerText = "Logged: " + new Date().toLocaleTimeString();
-}
-
-function stopCamera() {
-    scanner.stop().catch(err => console.log("Camera already stopped."));
-}
-
-function resetScanner() {
-    panel.style.display = 'none';
-    reader.style.display = 'block';
-    start();
-}
-
-function saveLog(name, type) {
-    let logs = JSON.parse(localStorage.getItem('vgn_gate_logs') || '[]');
-    logs.push({ name, type, time: new Date().toISOString() });
-    localStorage.setItem('vgn_gate_logs', JSON.stringify(logs));
-}
-    </script>
+    <h2>🛡️ Sentinel-Gate Terminal</h2>
+    <p>Select the appropriate module for your station:</p>
+    
+    <a href="receptionist-registry.html" class="btn">Reception Registry</a>
+    <a href="marshal-scanner.html" class="btn scanner">Guard Scanner</a>
 </body>
 </html>
