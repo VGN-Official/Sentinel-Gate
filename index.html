@@ -23,5 +23,34 @@
     
     <a href="receptionist-registry.html" class="btn">Reception Registry</a>
     <a href="marshal-scanner.html" class="btn scanner">Guard Scanner</a>
+
+    <div class="feedback-panel" style="margin-top: 30px; padding: 20px; background: white; border-radius: 12px; border: 1px solid #ddd; text-align: center;">
+    <h3 style="font-size: 1.1rem; color: #333; margin-bottom: 10px;">VGN Support & Feedback</h3>
+    <p style="font-size: 0.8rem; color: #666; margin-bottom: 15px;">Report a bug or suggest a feature to our dev team.</p>
+    
+    <form action="https://api.staticforms.xyz/submit" method="post">
+        <input type="hidden" name="accessKey" value="sf_994c7c62301ad637286a6c00"> 
+        <input type="hidden" name="subject" value="VGN App Feedback">
+
+        <input type="text" name="name" placeholder="Your Name Or Email" required 
+               style="width: 90%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 5px;">
+        
+        <textarea name="message" placeholder="Describe the issue or suggestion..." required 
+                  style="width: 90%; height: 80px; padding: 10px; border: 1px solid #ccc; border-radius: 5px; margin-bottom: 10px;"></textarea>
+        
+        <button type="submit" style="width: 95%; background: #333; color: white; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">
+            📤 SEND TO VGN DEV
+        </button>
+    </form>
+</div>
+
+   <footer style="margin-top: 50px; padding: 20px; text-align: center; font-size: 0.75rem; color: #777; line-height: 1.4;">
+        <p><strong>VGN Sentinel-Gate Privacy Commitment</strong></p>
+        <p>Location data are stored <strong>locally</strong> on this device. VGN does not upload your records to a central database.</p>
+        <p>© 2026 VGN Security Suite. All Rights Reserved.</p>
+        <p style="text-decoration: underline; cursor: pointer;" onclick="alert('Data Privacy: LocalStorage encryption active. Location: GPS-only. No 3rd party sharing.')">View Data Protocols</p>
+    </footer>
+
+
 </body>
 </html>
