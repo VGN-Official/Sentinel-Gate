@@ -9,7 +9,7 @@
       "sizes": "192x192",
       "purpose": "any maskable"
     },
-    {
+    { 
       "src": "logo.jpg",
       "type": "image/jpg",
       "sizes": "512x512",
