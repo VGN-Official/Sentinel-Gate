@@ -313,67 +313,28 @@
     </style>
 </head>
 <body>
-
-<div class="container">
-    <header class="no-print">
-        <h1>🛡️ VGN Sentinel Gate</h1>
-        <p>Unified Registry System & Print Engine</p>
-    </header>
-
-    <!-- Interactive Registry Panel -->
-    <div class="registry-panel no-print">
-        <h3 style="margin-top:0; color: var(--vgn-blue); border-bottom: 2px solid #eee; padding-bottom:10px;">
-            <i class="fa-solid fa-address-card"></i> Issue New Credential
-        </h3>
-        
-        <form id="cardForm" onsubmit="generateCard(event)">
-            <div class="form-grid">
-                <div class="form-group">
-                    <label for="cardType">Format Target</label>
-                    <select id="cardType" onchange="toggleFormInputs()">
-                        <option value="pvc">PVC Gate Pass Card (Vertical Style)</option>
-                        <option value="sticker">Windshield Security Sticker</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label for="passNumber">Pass / Serial ID No.</label>
-                    <input type="text" id="passNumber" value="SHQ - 4426" required>
-                </div>
-
-                <div class="form-group full-width">
-                    <label for="agencyName">Agency / Organisation Name</label>
-                    <input type="text" id="agencyName" value="NIGERIA IMMIGRATION SERVICE" required>
-                </div>
-
-                <div class="form-group" id="holderGroup">
-                    <label for="holderName">Holder / Owner Name</label>
-                    <input type="text" id="holderName" value="Ibrahim Babangida">
-                </div>
-
-                <div class="form-group" id="vehicleGroup">
-                    <label for="vehicleDetails">Vehicle Number / Info</label>
-                    <input type="text" id="vehicleDetails" value="Toyota Hilux [ABJ-904-CS]">
-                </div>
-            </div>
-
-            <button type="submit" class="btn-generate">
-                <i class="fa-solid fa-print"></i> Generate & Print Preview
-            </button>
-        </form>
-    </div>
-
-    <!-- Output Rendering Area -->
-    <h3 class="preview-title no-print">Generated Output (Print Ready)</h3>
+    <h2>🛡️ Sentinel-Gate Terminal</h2>
+    <p>Select the appropriate module for your station:</p>
     
-    <div class="output-area">
-        <!-- RENDER CONTAINER -->
-        <div id="renderTarget">
-            <!-- Dynamic layout injection point -->
-        </div>
+    <a href="receptionist-registry.html" class="btn">Reception Registry</a>
+    <a href="marshal-scanner.html" class="btn scanner">Guard Scanner</a>
+
+    <div class="feedback-panel" style="margin-top: 30px; padding: 20px; background: white; border-radius: 12px; border: 1px solid #ddd; text-align: center;">
+    <h3 style="font-size: 1.1rem; color: #333; margin-bottom: 10px;">VGN Support & Feedback</h3>
+    <p style="font-size: 0.8rem; color: #666; margin-bottom: 15px;">Report a bug or suggest a feature to our dev team.</p>
+    
+    <form action="https://api.staticforms.xyz/submit" method="post">
+        <input type="hidden" name="accessKey" value="sf_994c7c62301ad637286a6c00"> 
+        <input type="hidden" name="subject" value="VGN App Feedback">
+
+        <input type="text" name="name" placeholder="Your Name Or Email" required 
+               style="width: 90%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 5px;">
         
-        <button class="btn-generate no-print" style="width:200px; background:var(--vgn-green);" onclick="window.print()">
-            <i class="fa-solid fa-print"></i> Print Document
+        <textarea name="message" placeholder="Describe the issue or suggestion..." required 
+                  style="width: 90%; height: 80px; padding: 10px; border: 1px solid #ccc; border-radius: 5px; margin-bottom: 10px;"></textarea>
+        
+        <button type="submit" style="width: 95%; background: #333; color: white; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">
+            📤 SEND TO VGN DEV
         </button>
     </div>
 </div>
