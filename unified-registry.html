@@ -237,7 +237,7 @@
                 target.innerHTML = `
                     <div class="layout-cartag">
                         <div class="cartag-header">
-                            <img src="logo.jpg" alt="NCoS" class="ncos-logo" style="max-width:32px; max-height:32px;">
+                            <img src="logo.jpg" alt="NCoS" class="ncos-logo" style="max-width:40px; max-height:40px;">
                             <div class="cartag-header-text">
                                 <h4>NIGERIA CORRECTIONAL SERVICE</h4>
                                 <p>OFFICIAL VEHICLE GATE ACCESS PASS</p>
@@ -256,7 +256,7 @@
                                 <div class="cartag-id-badge">${id}</div>
                             </div>
                         </div>
-                        <div class="footer-text" style="font-size:5.5px; bottom:2px;">SECURITY ENFORCED • SI&I NHQ ABUJA • NON-TRANSFERABLE</div>
+                        <div class="footer-text" style="font-size:8.5px; bottom:2px;">SECURITY ENFORCED • SI&I NHQ ABUJA • NON-TRANSFERABLE</div>
                     </div>`;
                 
                 new QRCode(document.getElementById('qrNode'), { text: id, width: 70, height: 70 });
