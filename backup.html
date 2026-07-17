@@ -3,985 +3,136 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VGN Sentinel - Unified Registry</title>
-    <!-- FontAwesome & QRCode Library -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    
+    <title>VGN: Marshal Terminal</title>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Sentinel SOS">
+    <link rel="apple-touch-icon" href="logo.jpg">
+    <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
-        :root {
-            --vgn-blue: #1a237e;
-            --vgn-green: #1b5e20; /* Darker NCoS Forest Green */
-            --vgn-gold: #d35400;  /* Rich print orange/gold */
-            --card-bg: #ffffff;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f4f7f6;
-            margin: 0;
-            padding: 20px;
-            color: #333;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        .container {
-            width: 100%;
-            max-width: 1100px;
-            margin: 0 auto;
-        }
-
-        h2 {
-            color: var(--vgn-blue);
-            margin-top: 0;
-        }
-
-        /* Security Overlay Styles */
-        #vgn-lock-screen {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: #1a237e;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            z-index: 10000; color: white;
-        }
-        .lock-box { 
-            background: white; 
-            padding: 30px; 
-            border-radius: 15px; 
-            color: #333; 
-            text-align: center; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
-            max-width: 350px;
-            width: 90%;
-        }
-        .lock-box input { 
-            width: 100%;
-            font-size: 24px; 
-            text-align: center; 
-            letter-spacing: 5px; 
-            margin: 15px 0; 
-            border: 2px solid #1a237e; 
-            padding: 10px;
-            border-radius: 6px;
-            box-sizing: border-box;
-        }
-        .lock-box button {
-            width: 100%;
-            padding: 15px;
-            background: var(--vgn-blue);
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-weight: bold;
-            cursor: pointer;
-            font-size: 1rem;
-        }
-        .hidden-content { filter: blur(25px); pointer-events: none; user-select: none; }
-
-        /* Navigation Terminal Buttons */
-        .terminal-nav {
-            background: white;
-            padding: 15px;
-            border-radius: 12px;
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-        }
-
-        .nav-btn {
-            padding: 10px 20px;
-            background: #e0e4f5;
-            color: var(--vgn-blue);
-            border-radius: 6px;
-            font-weight: bold;
-            font-size: 0.9rem;
-            border: none;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .nav-btn.active {
-            background: var(--vgn-blue);
-            color: white;
-        }
-
-        .nav-btn:hover {
-            background: var(--vgn-blue);
-            color: white;
-        }
-
-        /* View Switching container */
-        .app-view {
-            display: none;
-        }
-        .app-view.active-view {
-            display: block;
-        }
-
-        /* Unified Registry Panels Layout */
-        .grid-panels {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-top: 20px;
-        }
-
-        @media (max-width: 768px) {
-            .grid-panels { grid-template-columns: 1fr; }
-        }
-
-        .registry-panel {
-            background: white;
-            padding: 25px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-            box-sizing: border-box;
-        }
-
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            margin-bottom: 15px;
-        }
-
-        label {
-            font-weight: bold;
-            font-size: 0.9rem;
-            margin-bottom: 5px;
-            color: #555;
-        }
-
-        input, select, textarea {
-            padding: 11px;
-            border: 1.5px solid #ccc;
-            border-radius: 6px;
-            font-size: 1rem;
-            outline: none;
-            transition: border-color 0.2s;
-            font-family: inherit;
-        }
-
-        input:focus, select:focus, textarea:focus {
-            border-color: var(--vgn-blue);
-        }
-
-        .btn-action {
-            background: var(--vgn-blue);
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            font-size: 1rem;
-            font-weight: bold;
-            border-radius: 8px;
-            cursor: pointer;
-            width: 100%;
-            transition: background 0.2s;
-        }
-
-        .btn-action:hover {
-            background: #0d165c;
-        }
-
-        /* Output & Preview Areas */
-        .preview-section {
-            background: white;
-            border-radius: 12px;
-            padding: 25px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-            margin-top: 30px;
-            text-align: center;
-        }
-
-        .output-area {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 30px;
-            margin-top: 25px;
-        }
-
-        /* PASS 1: NCoS Guest Visitor Paper Slip (Portrait) */
-        #printablePass {
-            display: none;
-            position: relative;
-            background: white;
-            width: 2.5in;
-            height: 3.5in;
-            border: 1px solid #333;
-            padding: 0.1in;
-            text-align: center;
-            box-sizing: border-box;
-            line-height: 1.1;
-            overflow: hidden;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
-        }
-
-        #printLogo { max-width: 45px; max-height: 45px; margin-bottom: 2px; }
-        #printGuestName { font-size: 14px; margin: 2px 0; font-weight: bold; color: #000; }
-        #printDetails { font-size: 11px; margin: 2px 0; color: #333; }
-        #printQR { margin: 5px auto; }
-        #printQR canvas, #printQR img { display: block; margin: 0 auto !important; }
-        
-        .footer-text {
-            position: absolute;
-            bottom: 0.1in; left: 0; right: 0;
-            font-size: 7px; color: #666;
-            border-top: 1px solid #eee; padding-top: 3px;
-            text-transform: uppercase;
-        }
-
-        /* LANDSCAPE DUAL-PANEL WRAPPER FOR PRINTING/DISPLAY */
-        .card-dual-wrapper {
-            display: flex;
-            gap: 20px;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-
-        /* Landscape PVC Card Base Layout (Front & Back) */
-        .pvc-landscape-card {
-            width: 440px;
-            height: 278px;
-            background: #ffffff;
-            border: 1.5px solid #ccc;
-            border-radius: 12px;
-            box-shadow: 0 6px 18px rgba(0,0,0,0.1);
-            position: relative;
-            box-sizing: border-box;
-            padding: 12px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-        }
-
-        /* Inner green frame on Front Side */
-        .pvc-front-border {
-            border: 3px solid var(--vgn-green);
-            border-radius: 8px;
-            width: 100%;
-            height: 100%;
-            box-sizing: border-box;
-            padding: 12px 16px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            text-align: left;
-        }
-
-        .pvc-front-header {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        /* Perfect NCoS Rounded Green Logo Mockup */
-        .ncos-badge-emblem {
-            width: 50px;
-            height: 50px;
-            background: var(--vgn-green);
-            border-radius: 50%;
-            border: 2px solid #ffd700; /* Gold Ring */
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #ffd700;
-            font-size: 1.5rem;
-            font-weight: 900;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-        }
-
-        .pvc-front-title-block {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .pvc-front-title-main {
-            color: var(--vgn-green);
-            font-size: 1.15rem;
-            font-weight: 900;
-            letter-spacing: 0.2px;
-            margin: 0;
-            text-transform: uppercase;
-        }
-
-        .pvc-front-title-sub {
-            color: var(--vgn-green);
-            font-size: 0.72rem;
-            font-weight: 900;
-            margin: 2px 0 0 0;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .pvc-front-body {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
-            margin-top: 10px;
-        }
-
-        .pvc-front-data {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
-        .pvc-text-bold-heavy {
-            font-weight: 900;
-            color: #000000;
-            font-size: 1.3rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .pvc-text-green-heavy {
-            font-weight: 900;
-            color: var(--vgn-green);
-            font-size: 1.15rem;
-            text-transform: uppercase;
-        }
-
-        .pvc-front-qr-area {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .pvc-front-serial {
-            color: var(--vgn-gold);
-            font-weight: 900;
-            font-size: 1.1rem;
-            margin-top: 8px;
-            text-transform: uppercase;
-        }
-
-        /* Back side inner formatting */
-        .pvc-back-content {
-            width: 100%;
-            height: 100%;
-            box-sizing: border-box;
-            padding: 18px 12px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            text-align: center;
-        }
-
-        .pvc-back-notice {
-            color: var(--vgn-green);
-            font-weight: 900;
-            font-size: 1.05rem;
-            line-height: 1.5;
-            text-align: justify;
-            text-align-last: center;
-            margin: 0;
-            text-transform: uppercase;
-        }
-
-        .pvc-back-footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
-            width: 100%;
-            margin-top: 10px;
-        }
-
-        .pvc-back-warning {
-            color: var(--vgn-gold);
-            font-weight: 900;
-            font-size: 1.1rem;
-            text-transform: uppercase;
-        }
-
-        .pvc-back-courtesy {
-            color: var(--vgn-green);
-            font-weight: 900;
-            font-size: 0.9rem;
-            text-align: right;
-            line-height: 1.3;
-        }
-
-        /* PASS 3: Landscape Sticker Layout (Standard Windshield Decal) */
-        .sticker-card {
-            width: 480px;
-            height: 300px;
-            background: white;
-            border: 4px solid var(--vgn-green);
-            border-radius: 15px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
-            box-sizing: border-box;
-            padding: 15px;
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-        }
-
-        .sticker-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            border-bottom: 3px solid var(--vgn-green);
-            padding-bottom: 8px;
-        }
-
-        .sticker-title {
-            font-size: 1.4rem;
-            font-weight: 900;
-            color: var(--vgn-green);
-            text-transform: uppercase;
-        }
-
-        .sticker-body {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-top: 10px;
-            height: 100%;
-        }
-
-        .sticker-details {
-            flex-grow: 1;
-            font-size: 1rem;
-            line-height: 1.5;
-            text-align: left;
-        }
-
-        .sticker-details table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .sticker-details td {
-            padding: 3px 0;
-            font-weight: bold;
-        }
-
-        .sticker-details .label {
-            color: #666;
-            font-weight: normal;
-            font-size: 0.85rem;
-        }
-
-        .qr-wrapper {
-            background: white;
-            padding: 6px;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .sticker-footer {
-            background: var(--vgn-green);
-            color: white;
-            text-align: center;
-            padding: 5px;
-            font-size: 0.8rem;
-            font-weight: bold;
-            border-radius: 4px;
-            margin-top: 10px;
-            text-transform: uppercase;
-        }
-
-        /* Log Table Styling */
-        .log-table { 
-            width: 100%; 
-            margin-top: 30px; 
-            border-collapse: collapse; 
-            background: white; 
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-            border-radius: 8px;
-            overflow: hidden;
-        }
-        .log-table th, .log-table td { padding: 12px; border: 1px solid #eee; text-align: left; }
-        .log-table th { background: #eee; }
-        .status-badge { padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; background: #e8f5e9; color: #2e7d32; font-weight: bold; }
-
-        /* Print Override */
-        @media print {
-            body * { visibility: hidden; }
-            #renderTarget, #renderTarget *, #printablePass, #printablePass * { visibility: visible; }
-            #printablePass { position: absolute; left: 0; top: 0; margin: 0; border: 1px solid #000; display: block !important; }
-            #renderTarget { position: absolute; left: 0; top: 0; }
-            #actualPrintBtn, #printActionBtn { display: none !important; }
-        }
+        body { font-family: sans-serif; background: #121212; color: white; text-align: center; margin: 0; padding: 20px; }
+        #reader { width: 100%; max-width: 450px; margin: 20px auto; border-radius: 15px; overflow: hidden; border: 2px solid #333; }
+        .panel { display: none; padding: 30px; border-radius: 20px; margin-top: 20px; }
+        .granted { background: #1b5e20; border: 5px solid #4caf50; }
+        .denied { background: #b71c1c; border: 5px solid #f44336; }
+        .btn-reset { background: white; color: black; padding: 15px 30px; border-radius: 10px; font-weight: bold; border: none; margin-top: 20px; cursor: pointer; }
     </style>
+
+        <link rel="manifest" href="manifest.json">
+        <meta name="theme-color" content="#1a237e">
+
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js')
+        .then(reg => console.log('Sentinel PWA: Active', reg.scope))
+        .catch(err => console.log('Sentinel PWA: Offline Failure', err));
+    });
+  }
+</script>
+
 </head>
 <body>
+    <header>
+    <h2 style="color: #448aff;">🛡️ MARSHAL TERMINAL</h2>
+    <div style="margin-bottom: 20px;">
+        <button onclick="start()" style="background: #2e7d32; color: white; padding: 10px 20px; border: none; border-radius: 5px;">START CAMERA</button>
+        <button onclick="stopCamera()" style="background: #c62828; color: white; padding: 10px 20px; border: none; border-radius: 5px;">STOP CAMERA</button>
+    </div>
+    <p id="instruction-text">Manual Control Active</p>
+</header>
 
-    <!-- Security Overlay Gate -->
-    <div id="vgn-lock-screen">
-        <div class="lock-box">
-            <img src="logo.jpg" style="width: 80px; margin-bottom: 10px;">
-            </div>
-            <h2 style="margin-bottom: 5px; color: #1a237e;">VGN ACCESS CONTROL</h2>
-            <p style="font-size: 12px; color: #666; margin-bottom: 20px;">SECURITY, INTELLIGENCE & INVESTIGATION UNIT</p>
-            <input type="password" id="vgn-pin" placeholder="****" maxlength="4">
-            <button onclick="unlockRegistry()">AUTHORIZE ACCESS</button>
-            <p id="lock-msg" style="color: red; font-size: 12px; margin-top: 10px;"></p>
-        </div>
+    <div id="reader" style="width: 100%; max-width: 500px; margin: auto;"></div>
+
+    <div id="result-panel" class="panel">
+        <h1 id="status-title"></h1>
+        <p id="visitor-details" style="font-size: 1.2rem;"></p>
+        <hr style="opacity: 0.2;">
+        <p id="timestamp" style="font-size: 0.8rem;"></p>
+        <button class="btn-reset" onclick="resetScanner()">SCAN NEXT GUEST</button>
     </div>
 
-    <!-- Authorized Application Area -->
-    <div id="main-content" class="container hidden-content">
-        
-        <header>
-            <h1>🛡️ Sentinel-Gate Terminal</h1>
-            <p style="color: #666;">Unified Access Control & Security Registry</p>
-        </header>
-
-       <!-- SPA Navigation Tabs -->
-<div class="terminal-nav">
-    <!-- Notice the added 'this' inside the switchView arguments below -->
-    <button class="nav-btn active" onclick="switchView('generator', this)">Registry Terminal & Generator</button>
-    <button class="nav-btn" onclick="switchView('logs', this)">Live Monitoring Database</button>
-    <button class="nav-btn" onclick="lockTerminal()" style="background: #c62828; color: white; margin-left: auto;">
-        <i class="fa-solid fa-lock"></i> Lock Terminal
-    </button>
-</div>
-        <!-- VIEW 1: Generator & Input Forms -->
-        <div id="view-generator" class="app-view active-view">
-            <div class="grid-panels">
-                <!-- PANEL 1: NCoS Guest Receptionist -->
-                <div class="registry-panel">
-                    <h3 style="color: var(--vgn-blue); margin-top: 0; border-bottom: 2px dashed #eee; padding-bottom: 10px;">
-                        📝 Guest Reception (NCoS)
-                    </h3>
-                    <div class="form-group">
-                        <label>Card Number</label>
-                        <input type="text" id="cardID" placeholder="e.g., 001">
-                    </div>
-                    <div class="form-group">
-                        <label>Guest Full Name</label>
-                        <input type="text" id="guestName" placeholder="VISITOR">
-                    </div>
-                    <div class="form-group">
-                        <label>Destination / Purpose / Vehicle</label>
-                        <input type="text" id="visitPurpose" placeholder="001 (PERSONAL CAR)">
-                    </div>
-                    <button class="btn-action" onclick="assignCard()">LINK & ACTIVATE GUEST CARD</button>
-                </div>
-
-                <!-- PANEL 2: VGN Gate Pass & Decal Generator -->
-                <div class="registry-panel">
-                    <h3 style="color: var(--vgn-green); margin-top: 0; border-bottom: 2px dashed #eee; padding-bottom: 10px;">
-                        🚗 Vehicle Pass / Decal (VGN)
-                    </h3>
-                    <form id="cardForm" onsubmit="generateCard(event)">
-                        <div class="form-group">
-                            <label>Registry Target Type</label>
-                            <select id="cardType" onchange="toggleFormInputs()">
-                                <option value="pvc">PVC Gate Card (Landscape - Dual Sided)</option>
-                                <option value="sticker">Windshield Sticker (Landscape)</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Serial / Pass Number</label>
-                            <input type="text" id="passNumber" value="NHQ-001" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Agency Title</label>
-                            <input type="text" id="agencyName" value="NIGERIA CORRECTIONAL SERVICE">
-                        </div>
-                        <div class="form-group" id="holderGroup">
-                            <label>Registered Owner / Holder</label>
-                            <input type="text" id="holderName" value="VISITOR" required>
-                        </div>
-                        <div class="form-group" id="vehicleGroup">
-                            <label>Vehicle Class / Plate</label>
-                            <input type="text" id="vehicleDetails" value="001 (PERSONAL CAR)" required>
-                        </div>
-                        <div class="form-group" id="additionalGroup">
-                            <label>Secondary Info (Plate / Line 3)</label>
-                            <input type="text" id="plateDetails" value="XXXXXXXXXX">
-                        </div>
-                        <button type="submit" class="btn-action" style="background: var(--vgn-green)">GENERATE SECURE PASS</button>
-                    </form>
-                </div>
-            </div>
-
-            <!-- Unified Live Preview Deck -->
-            <div class="preview-section">
-                <h3 class="preview-title" style="margin-top:0;">🛡️ Active Security Print Preview</h3>
-                
-                <div class="output-area">
-                    <!-- Card Container 1: Guest Visitor Slip -->
-                    <div id="printablePass">
-                        <div style="border-bottom: 1px solid #333; padding-bottom: 3px; margin-bottom: 5px;">
-                            <div class="ncos-badge-emblem" style="width: 35px; height: 35px; font-size: 1rem; margin: 0 auto 3px auto;">
-                                <i class="fa-solid fa-shield-halved"></i>
-                            </div>
-                            <h3 style="margin:0; color:#1a237e; font-size: 11px;">NIGERIA CORRECTIONAL SERVICE</h3>
-                            <p style="font-size: 8px; margin: 0; font-weight: bold;">NHQ, ABUJA</p>
-                        </div>
-                        <p style="font-size: 9px; font-weight: bold; margin: 2px 0; letter-spacing: 1px;">VISITOR PASS</p>
-                        <div id="printQR"></div>
-                        <p style="font-size: 8px; color: #666; margin: 0;">VALID TODAY ONLY</p>
-                        <div style="margin-top: 8px;">
-                            <p style="font-size: 7px; text-transform: uppercase; margin-bottom: 1px; color: #777;">Guest Name:</p>
-                            <div id="printGuestName"></div>
-                            <div id="printDetails"></div>
-                        </div>
-                        <div class="footer-text">
-                            Property of NCoS SI&I NHQ.<br>Must be returned to Security.
-                        </div>
-                        <button onclick="window.print()" id="actualPrintBtn" style="background:#4caf50; color:white; border:none; border-radius:4px; padding:5px; cursor:pointer; font-size: 10px; margin-top: 5px; position: relative; z-index:1100;">Print Pass</button>
-                    </div>
-
-                    <!-- Card Container 2: Dynamic PVC/Sticker Render Target -->
-                    <div id="renderTarget"></div>
-                </div>
-                
-                <button id="printActionBtn" onclick="window.print()" class="btn-action" style="max-width:300px; margin-top:20px; display:none; background:#333;">
-                    🖨️ SEND GENERATED LAYOUT TO PRINTER
-                </button>
-            </div>
-        </div>
-
-        <!-- VIEW 2: Database Logs -->
-        <div id="view-logs" class="app-view">
-            <h2>📊 Registered Security Activity Database</h2>
-            <p style="color:#666;">Local audit log for gate registers, access passes, and validation status.</p>
-            <table class="log-table" id="logTable">
-                <thead>
-                    <tr>
-                        <th>Identifier / Card</th>
-                        <th>Holder / Guest</th>
-                        <th>Destination / Category</th>
-                        <th>Status</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody id="logBody"></tbody>
-            </table>
-        </div>
-
-        <!-- Feedback Panel -->
-        <div class="feedback-panel" style="margin-top: 40px; padding: 25px; background: white; border-radius: 12px; border: 1px solid #ddd; text-align: center;">
-            <h3 style="font-size: 1.1rem; color: #333; margin-bottom: 10px;">VGN Support & Feedback</h3>
-            <p style="font-size: 0.8rem; color: #666; margin-bottom: 15px;">Report a bug or suggest a feature directly to our dev team.</p>
-            <form action="https://api.staticforms.xyz/submit" method="post">
-                <input type="hidden" name="accessKey" value="sf_994c7c62301ad637286a6c00"> 
-                <input type="hidden" name="subject" value="VGN App Feedback">
-                <input type="text" name="name" placeholder="Your Name Or Email" required style="width: 90%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box;">
-                <textarea name="message" placeholder="Describe the issue or suggestion..." required style="width: 90%; height: 80px; padding: 10px; border: 1px solid #ccc; border-radius: 5px; margin-bottom: 10px; box-sizing: border-box;"></textarea>
-                <button type="submit" style="width: 90%; background: #333; color: white; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">
-                    📤 SEND TO VGN DEV
-                </button>
-            </form>
-        </div>
-
-    </div>
+    <audio id="successSound" src="https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3"></audio>
 
     <script>
 
-        function lockTerminal() {
-    // Clear session auth
-    sessionStorage.removeItem('vgn_auth');
-    // Force a reload to bring back the lock overlay instantly
-    window.location.reload();
-}
+  // Ensure scanner is defined globally
+const scanner = new Html5Qrcode("reader");
+const panel = document.getElementById('result-panel');
+const reader = document.getElementById('reader');
 
-       const MASTER_PIN = "2026"; 
+function start() {
+    // Show the reader div if it was hidden
+    reader.style.display = 'block';
+    panel.style.display = 'none';
 
-// SPA Navigation logic to eliminate GET routing errors
-function switchView(viewName, btnEl) {
-    try {
-        // Hide all views safely
-        document.querySelectorAll('.app-view').forEach(view => {
-            view.classList.remove('active-view');
-        });
-        // Remove active class from all buttons safely
-        document.querySelectorAll('.nav-btn').forEach(btn => {
-            btn.classList.remove('active');
-        });
-
-        // Show the selected view
-        const targetView = document.getElementById(`view-${viewName}`);
-        if (targetView) {
-            targetView.classList.add('active-view');
-        } else {
-            console.error(`View 'view-${viewName}' not found in DOM.`);
-        }
-
-        // Activate the clicked button
-        if (btnEl) {
-            btnEl.classList.add('active');
-        } else {
-            // Fallback: Find button by class or layout if clicked programmatically
-            const buttons = document.querySelectorAll('.nav-btn');
-            buttons.forEach(btn => {
-                if (btn.getAttribute('onclick') && btn.getAttribute('onclick').includes(viewName)) {
-                    btn.classList.add('active');
-                }
+    Html5Qrcode.getCameras().then(cameras => {
+        if (cameras && cameras.length > 0) {
+            // If multiple cameras (like on a phone), use the back one (index 0 or 1)
+            const cameraId = cameras.length > 1 ? cameras[1].id : cameras[0].id;
+            
+            scanner.start(
+                cameraId, 
+                { fps: 10, qrbox: { width: 250, height: 250 } },
+                onScanSuccess
+            ).catch(err => {
+                console.error("Scanner failed to start:", err);
+                alert("Camera permission denied or camera in use.");
             });
+        } else {
+            alert("No cameras found on this device.");
         }
-    } catch (error) {
-        console.error("Navigation Error: ", error);
-    }
-}
-
-function unlockRegistry() {
-    const pin = document.getElementById('vgn-pin').value;
-    const msg = document.getElementById('lock-msg');
-    
-    if (pin === MASTER_PIN) {
-        document.getElementById('vgn-lock-screen').style.display = 'none';
-        document.getElementById('main-content').classList.remove('hidden-content');
-        sessionStorage.setItem('vgn_auth', 'true');
-    } else {
-        msg.innerText = "ACCESS DENIED: INVALID CREDENTIALS";
-        document.getElementById('vgn-pin').value = "";
-    }
-}
-
-function toggleFormInputs() {
-    const cardTypeEl = document.getElementById('cardType');
-    if (!cardTypeEl) return; // Guard clause
-
-    const type = cardTypeEl.value;
-    const holderGroup = document.getElementById('holderGroup');
-    const vehicleGroup = document.getElementById('vehicleGroup');
-    const additionalGroup = document.getElementById('additionalGroup');
-    
-    if (type === 'pvc') {
-        if (holderGroup) holderGroup.style.display = 'flex';
-        if (vehicleGroup) vehicleGroup.style.display = 'flex';
-        if (additionalGroup) additionalGroup.style.display = 'flex';
-    } else {
-        if (holderGroup) holderGroup.style.display = 'flex';
-        if (vehicleGroup) vehicleGroup.style.display = 'flex';
-        if (additionalGroup) additionalGroup.style.display = 'none';
-    }
-}
-
-// Logic for Module 1: Guest Receptionist Card Linking
-function assignCard() {
-    const id = document.getElementById('cardID').value;
-    const name = document.getElementById('guestName').value;
-    const purpose = document.getElementById('visitPurpose').value;
-
-    if(!id || !name) return alert("Fill Guest Name and Card ID");
-
-    // Hide the VGN dynamic layout area while dealing with guest receipts
-    document.getElementById('renderTarget').innerHTML = "";
-    document.getElementById('printActionBtn').style.display = 'none';
-
-    // Store in localized key structure compatible with security workflows
-    saveToLocalRegistry(id, {
-        type: 'Guest Pass',
-        agency: 'NCoS SI&I',
-        holder: name,
-        vehicle: purpose,
-        status: 'ACTIVE',
-        timestamp: new Date().toLocaleTimeString()
+    }).catch(err => {
+        console.error("Error getting cameras:", err);
     });
+}
 
-    // Handle QR Printing Generation
-    document.getElementById('printablePass').style.display = 'block';
-    document.getElementById('printGuestName').innerText = name.toUpperCase();
-    document.getElementById('printDetails').innerText = `DESTINATION: ${purpose}`;
-    
-    const printQRContainer = document.getElementById('printQR');
-    printQRContainer.innerHTML = "";
-    new QRCode(printQRContainer, { 
-        text: id, 
-        width: 90, 
-        height: 90,
-        colorDark : "#000000",
-        colorLight : "#ffffff"
+function onScanSuccess(decodedText) {
+    scanner.stop().then(() => {
+        reader.style.display = 'none';
+        panel.style.display = 'block';
+
+        // 1. Check if the code is one of YOUR cards (e.g., starts with 'NCoS' or is a number)
+        // We will assume your cards are numbered 001, 002, etc.
+        const isOfficialCard = !isNaN(decodedText) || decodedText.startsWith("NCoS");
+
+        if (isOfficialCard) {
+            panel.className = "panel granted";
+            document.getElementById('status-title').innerText = "✅ VALID CARD DETECTED";
+            document.getElementById('visitor-details').innerText = `Card ID: ${decodedText}\nStatus: Verified Physical Asset`;
+            saveLog(decodedText, "ENTRY_SCAN");
+        } else {
+            panel.className = "panel denied";
+            document.getElementById('status-title').innerText = "❌ UNKNOWN CODE";
+            document.getElementById('visitor-details').innerText = `Scanned: ${decodedText}\nStatus: Not an NHQ Issued Card`;
+        }
+        
+        document.getElementById('timestamp').innerText = "Logged: " + new Date().toLocaleString();
     });
-
-    updateTable();
-    document.getElementById('cardID').value = "";
-    document.getElementById('guestName').value = "";
-    document.getElementById('visitPurpose').value = "";
 }
 
-// Logic for Module 2: Security Gate Card / Sticker Decal Generator
-function generateCard(event) {
-    if (event) event.preventDefault();
-    
-    const type = document.getElementById('cardType').value;
-    const passNo = document.getElementById('passNumber').value;
-    const agency = document.getElementById('agencyName').value;
-    const holder = document.getElementById('holderName').value;
-    const vehicle = document.getElementById('vehicleDetails').value;
-    const plate = document.getElementById('plateDetails') ? document.getElementById('plateDetails').value : '';
-    
-    // Hide the guest receptionist pass since we are printing VGN stickers/PVCs
-    document.getElementById('printablePass').style.display = 'none';
-    document.getElementById('printActionBtn').style.display = 'block';
-
-    const renderTarget = document.getElementById('renderTarget');
-    
-    // Scanner Payload String for QR scanning validation compatibility
-    const scanPayload = JSON.stringify({
-        app: "VGN-Sentinel",
-        type: type,
-        id: passNo,
-        owner: holder,
-        v: vehicle
-    });
-
-    if (type === 'pvc') {
-        // Landscape PVC rendering with perfectly replicated Front & Back
-        renderTarget.innerHTML = `
-            <div class="card-dual-wrapper">
-                <!-- FRONT SIDE -->
-                <div class="pvc-landscape-card">
-                    <div class="pvc-front-border">
-                        <div class="pvc-front-header">
-                            <div class="ncos-badge-emblem">
-                                <i class="fa-solid fa-shield-halved"></i>
-                            </div>
-                            <div class="pvc-front-title-block">
-                                <h4 class="pvc-front-title-main">${agency}</h4>
-                                <p class="pvc-front-title-sub">OFFICIAL VEHICLE GATE ACCESS PASS</p>
-                            </div>
-                        </div>
-                        <div class="pvc-front-body">
-                            <div class="pvc-front-data">
-                                <div class="pvc-text-bold-heavy">${holder}</div>
-                                <div class="pvc-text-green-heavy">${vehicle}</div>
-                                <div class="pvc-text-bold-heavy">${plate}</div>
-                            </div>
-                            <div class="pvc-front-qr-area">
-                                <div class="qr-wrapper" id="targetQRFront"></div>
-                                <div class="pvc-front-serial">${passNo}</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- BACK SIDE -->
-                <div class="pvc-landscape-card">
-                    <div class="pvc-back-content">
-                        <p class="pvc-back-notice">
-                            THIS VEHICLE PASS IS A PROPERTIY<br>
-                            OF NCoS (NHQ). IF LOST, A PENALTY<br>
-                            IS INCURED RANGING FROM A FINE OF<br>
-                            N10,000 TO ANY OTHER AS DEEMS<br>
-                            APPROPRIATE BY THE AUTHORITY.
-                        </p>
-                        <div class="pvc-back-footer">
-                            <div class="pvc-back-warning">HANDLE WITH CAUTION!</div>
-                            <div class="pvc-back-courtesy">
-                                Courtesy: SI&I Dept.<br>
-                                (NHQ)
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>`;
-
-        // Render Front QR
-        new QRCode(document.getElementById("targetQRFront"), {
-            text: scanPayload,
-            width: 75,
-            height: 75,
-            colorDark: "#1b5e20", // Forrest green dark
-            colorLight: "#ffffff"
-        });
-
-    } else {
-        renderTarget.innerHTML = `
-            <div class="sticker-card">
-                <div class="sticker-header">
-                    <span class="sticker-title">VGN VEHICLE ACCESS</span>
-                    <i class="fa-solid fa-shield-halved" style="color: var(--vgn-green); font-size:1.5rem;"></i>
-                </div>
-                <div class="sticker-body">
-                    <div class="sticker-details">
-                        <table>
-                            <tr><td class="label">SERIAL PASS NO.</td></tr>
-                            <tr><td style="font-size: 1.2rem; color: #111;">${passNo}</td></tr>
-                            <tr><td class="label">REGISTERED OWNER</td></tr>
-                            <tr><td style="font-size: 0.95rem;">${holder}</td></tr>
-                            <tr><td class="label">VEHICLE CLASS / PLATE</td></tr>
-                            <tr><td style="font-size: 0.9rem; color:#444;">${vehicle}</td></tr>
-                        </table>
-                    </div>
-                    <div class="qr-wrapper" id="targetQRSticker"></div>
-                </div>
-                <div class="sticker-footer">SECURE PARKING PROTOCOL REGISTERED</div>
-            </div>`;
-
-        // Render Sticker QR
-        new QRCode(document.getElementById("targetQRSticker"), {
-            text: scanPayload,
-            width: 90,
-            height: 90,
-            colorDark: "#000000",
-            colorLight: "#ffffff"
-        });
-    }
-
-    saveToLocalRegistry(passNo, {
-        type: type === 'pvc' ? 'PVC Card' : 'Vehicle Sticker',
-        agency: agency,
-        holder: holder,
-        vehicle: vehicle,
-        status: 'ACTIVE',
-        timestamp: new Date().toLocaleTimeString()
-    });
-
-    updateTable();
+function showResult(title, details, className) {
+    document.getElementById('status-title').innerText = title;
+    document.getElementById('visitor-details').innerText = details;
+    document.getElementById('result-panel').className = "panel " + className;
+    document.getElementById('timestamp').innerText = "Logged: " + new Date().toLocaleTimeString();
 }
 
-// Shared Storage Logic
-function saveToLocalRegistry(id, data) {
-    let registry = JSON.parse(localStorage.getItem('vgn_registry') || '{}');
-    registry[id] = data;
-    localStorage.setItem('vgn_registry', JSON.stringify(registry));
+function stopCamera() {
+    scanner.stop().catch(err => console.log("Camera already stopped."));
 }
 
-function updateTable() {
-    const registry = JSON.parse(localStorage.getItem('vgn_registry') || '{}');
-    const tbody = document.getElementById('logBody');
-    if(!tbody) return; 
-    tbody.innerHTML = "";
-    for (let id in registry) {
-        tbody.innerHTML += `<tr>
-            <td><b>${id}</b></td>
-            <td>${registry[id].holder}</td>
-            <td>${registry[id].vehicle} <span style="font-size:0.75rem; color:#666; display:block;">Module: ${registry[id].type}</span></td>
-            <td><span class="status-badge">${registry[id].status || 'ACTIVE'}</span></td>
-            <td><button onclick="clearCard('${id}')" style="background:red; color:white; border:none; padding:5px; font-size:10px; cursor:pointer; border-radius:4px;">End</button></td>
-        </tr>`;
-    }
+function resetScanner() {
+    panel.style.display = 'none';
+    reader.style.display = 'block';
+    start();
 }
 
-function clearCard(id) {
-    let registry = JSON.parse(localStorage.getItem('vgn_registry') || '{}');
-    delete registry[id];
-    localStorage.setItem('vgn_registry', JSON.stringify(registry));
-    updateTable();
-    document.getElementById('printablePass').style.display = 'none';
-    document.getElementById('renderTarget').innerHTML = "";
-    document.getElementById('printActionBtn').style.display = 'none';
+function saveLog(name, type) {
+    let logs = JSON.parse(localStorage.getItem('vgn_gate_logs') || '[]');
+    logs.push({ name, type, time: new Date().toISOString() });
+    localStorage.setItem('vgn_gate_logs', JSON.stringify(logs));
 }
-
-// Robust Dom-Ready Initialization
-document.addEventListener("DOMContentLoaded", function() {
-    updateTable();
-    toggleFormInputs();
-    
-    // Maintain Authorization Status across page sessions safely
-    if (sessionStorage.getItem('vgn_auth') === 'true') {
-        const lockScreen = document.getElementById('vgn-lock-screen');
-        const mainContent = document.getElementById('main-content');
-        if (lockScreen) lockScreen.style.display = 'none';
-        if (mainContent) mainContent.classList.remove('hidden-content');
-    }
-});
-</script>
+    </script>
 </body>
 </html>
