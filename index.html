@@ -411,29 +411,46 @@ function onScanSuccess(decodedText) {
         reader.style.display = 'none';
         panel.style.display = 'block';
 
+        // Clean any potential hidden characters or padding
         let parsedPayload = null;
-        let scannedId = decodedText.trim();
         let isJson = false;
+        let scannedId = decodedText.trim(); // Safely initialize from the QR scanner output
 
-        // Try to parse JSON data structures (Car Stickers / Decals)
         try {
-            if (scannedId.startsWith('{')) {
+            if (scannedId.startsWith('{') && scannedId.endsWith('}')) {
                 parsedPayload = JSON.parse(scannedId);
                 if (parsedPayload && parsedPayload.id) {
-                    scannedId = parsedPayload.id;
+                    scannedId = parsedPayload.id.toString().trim(); // Extract the true database key ("passNo")
                     isJson = true;
                 }
             }
         } catch(e) {
-            console.log("Standard text fallback context.");
+            console.log("Standard text fallback context:", e);
+            scannedId = decodedText.trim();
+            isJson = false;
+        }
+        
+     // 1. DATABASE LOADING & CLEANING
+        const registry = JSON.parse(localStorage.getItem('vgn_registry') || '{}');
+        
+        // Convert scanned ID to lowercase for case-insensitive matching
+        const lookupId = scannedId.toLowerCase().trim(); 
+        
+        // Find the asset case-insensitively
+        let registeredAsset = null;
+        let finalMatchedId = scannedId; // Fallback to original if not found
+
+        for (let key in registry) {
+            if (key.toLowerCase().trim() === lookupId) {
+                registeredAsset = registry[key];
+                finalMatchedId = key; // Use the exact case-sensitive key found in database
+                break;
+            }
         }
 
-        // DATABASE VERIFICATION LAYER (Check against your vgn_registry)
-        const registry = JSON.parse(localStorage.getItem('vgn_registry') || '{}');
-        const registeredAsset = registry[scannedId];
-
+        // 2. STAGE ACCESSIBILITY VALIDATION
         // Access is strictly granted ONLY if the ID exists in database and is ACTIVE
-        if (registeredAsset && registeredAsset.status === 'ACTIVE') {
+        if (registeredAsset && (registeredAsset.status === 'ACTIVE' || !registeredAsset.status)) {
             panel.className = "panel granted";
             document.getElementById('status-title').innerText = "✅ VALID ACCESS DETECTED";
             
@@ -448,26 +465,28 @@ function onScanSuccess(decodedText) {
                                 <p style="margin: 0; font-size: 10px; color: #aaa;">${assetType}</p>
                             </div>
                         </div>
-                        <p style="margin: 5px 0; font-size: 14px;"><b>Serial ID:</b> <span style="color: #ffb300;">${scannedId}</span></p>
+                        <p style="margin: 5px 0; font-size: 14px;"><b>Serial ID:</b> <span style="color: #ffb300;">${finalMatchedId}</span></p>
                         <p style="margin: 5px 0; font-size: 16px;"><b>Holder:</b> ${registeredAsset.holder || parsedPayload.owner || 'UNKNOWN'}</p>
                         <p style="margin: 5px 0; font-size: 14px; color: #ddd;"><b>Vehicle/Target:</b> ${registeredAsset.vehicle || parsedPayload.v || 'N/A'}</p>
                     </div>`;
-                saveLog(scannedId, registeredAsset.holder, registeredAsset.vehicle, assetType);
+                saveLog(finalMatchedId, registeredAsset.holder, registeredAsset.vehicle, assetType);
             } else {
+                // UI layout render for Standard / Guest Passes
+                const passLabel = registeredAsset.type ? registeredAsset.type.toUpperCase() : 'GUEST PASS';
                 document.getElementById('visitor-details').innerHTML = `
                     <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 10px; margin-top: 10px; text-align: left;">
                         <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 8px;">
                             <img src="logo.jpg" alt="Logo" style="width: 40px; height: 40px; object-fit: contain;">
                             <div>
                                 <h4 style="margin: 0; color: #4caf50; font-size: 14px; letter-spacing:1px;">NIGERIA CORRECTIONAL SERVICE</h4>
-                                <p style="margin: 0; font-size: 10px; color: #aaa;">PHYSICAL SECURITY ASSET</p>
+                                <p style="margin: 0; font-size: 10px; color: #aaa;">${passLabel}</p>
                             </div>
                         </div>
-                        <p style="margin: 5px 0; font-size: 15px;"><b>Card ID:</b> <span style="color: #ffb300;">${scannedId}</span></p>
+                        <p style="margin: 5px 0; font-size: 15px;"><b>Card ID:</b> <span style="color: #ffb300;">${finalMatchedId}</span></p>
                         <p style="margin: 5px 0; font-size: 15px;"><b>Holder:</b> ${registeredAsset.holder}</p>
-                        <p style="margin: 5px 0; font-size: 13px; color: #ccc;"><b>Status:</b> Verified Active Database Asset</p>
+                        <p style="margin: 5px 0; font-size: 13px; color: #ccc;"><b>Purpose/Vehicle:</b> ${registeredAsset.vehicle || 'N/A'}</p>
                     </div>`;
-                saveLog(scannedId, registeredAsset.holder, registeredAsset.vehicle, "PHYSICAL_CARD");
+                saveLog(finalMatchedId, registeredAsset.holder, registeredAsset.vehicle, passLabel);
             }
         } else {
             // Unregistered, revoked, or fake code fallback
