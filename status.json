@@ -1,0 +1,14 @@
+{
+  "001": {
+    "type": "Sticker",
+    "holder": "Officer Name",
+    "vehicle": "Toyota Hilux",
+    "status": "ACTIVE"
+  },
+  "kkk": {
+    "type": "Guest Pass",
+    "holder": "John Doe",
+    "vehicle": "Official Visit",
+    "status": "ACTIVE"
+  }
+}
