@@ -289,23 +289,33 @@
             }
         }
 
-        function updateTable() {
-            const registry = JSON.parse(localStorage.getItem('vgn_registry') || '{}');
-            const tbody = document.getElementById('logBody');
-            if(!tbody) return; 
-            tbody.innerHTML = "";
-            for (let id in registry) {
-                let currentProfile = registry[id];
-                let displayMeta = currentProfile.module === 'guest' ? currentProfile.purpose : `${currentProfile.vehicle} [${currentProfile.plate}]`;
-                
-                tbody.innerHTML += `<tr>
-                    <td><b>${id}</b></td>
-                    <td><div style="font-weight:bold;">${currentProfile.name}</div><span style="font-size:11px; color:#666;">${displayMeta}</span></td>
-                    <td><span class="status-badge" style="background:${currentProfile.module==='guest'?'#e8f5e9':currentProfile.module==='cartag'?'#e3f2fd':'#fff3e0'}; color:${currentProfile.module==='guest'?'#2e7d32':currentProfile.module==='cartag'?'#1565c0':'#e65100'};">${currentProfile.module.toUpperCase()}</span></td>
-                    <td><button onclick="clearCard('${id}')" style="background:#d32f2f; color:white; border:none; padding:6px 10px; font-size:11px; cursor:pointer; border-radius:4px; width:auto;">Revoke</button></td>
-                </tr>`;
-            }
-        }
+       function updateTable() {
+    const registry = JSON.parse(localStorage.getItem('vgn_registry') || '{}');
+    const tbody = document.getElementById('logBody');
+    if(!tbody) return; 
+    tbody.innerHTML = "";
+    
+    for (let id in registry) {
+        let currentProfile = registry[id];
+        
+        // 1. SAFEGUARD: Fallback if module, name, or properties are missing
+        let cardModule = currentProfile.module || 'guest'; 
+        let cardName = currentProfile.name || currentProfile.holder || 'UNKNOWN';
+        let cardVehicle = currentProfile.vehicle || 'N/A';
+        let cardPlate = currentProfile.plate || 'N/A';
+        let cardPurpose = currentProfile.purpose || currentProfile.vehicle || 'N/A';
+
+        // 2. Adjust metadata display safely
+        let displayMeta = cardModule === 'guest' ? cardPurpose : `${cardVehicle} [${cardPlate}]`;
+        
+        tbody.innerHTML += `<tr>
+            <td><b>${id}</b></td>
+            <td><div style="font-weight:bold;">${cardName}</div><span style="font-size:11px; color:#666;">${displayMeta}</span></td>
+            <td><span class="status-badge" style="background:${cardModule==='guest'?'#e8f5e9':cardModule==='cartag'?'#e3f2fd':'#fff3e0'}; color:${cardModule==='guest'?'#2e7d32':cardModule==='cartag'?'#1565c0':'#e65100'};">${cardModule.toUpperCase()}</span></td>
+            <td><button onclick="clearCard('${id}')" style="background:#d32f2f; color:white; border:none; padding:6px 10px; font-size:11px; cursor:pointer; border-radius:4px; width:auto;">Revoke</button></td>
+        </tr>`;
+    }
+}
 
         function clearCard(id) {
             let registry = JSON.parse(localStorage.getItem('vgn_registry') || '{}');
