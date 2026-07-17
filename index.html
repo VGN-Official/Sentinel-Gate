@@ -291,7 +291,7 @@
         const panel = document.getElementById('result-panel');
         const reader = document.getElementById('reader');
         const audioFeedback = document.getElementById('successSound');
-
+        let isScanning = false; // <-- Perfect. Right here!
         // SPA Navigation Framework Controllers
         function switchView(viewName, btnEl) {
             try {
@@ -339,6 +339,8 @@
             const pin = document.getElementById('vgn-pin').value;
             const msg = document.getElementById('lock-msg');
             
+           
+
             if (pin === MASTER_PIN) {
                 sessionStorage.setItem('vgn_auth', 'true');
                 applyPermissions(true);
@@ -369,67 +371,121 @@
         }
 
         // Camera Initialization Pipeline Tracker
-        function start() {
-            reader.style.display = 'block';
-            panel.style.display = 'none';
+      function start() {
+    if (isScanning) return; // Guard against double-initialization
+    reader.style.display = 'block';
+    panel.style.display = 'none';
 
-            Html5Qrcode.getCameras().then(cameras => {
-                if (cameras && cameras.length > 0) {
-                    const cameraId = cameras.length > 1 ? cameras[1].id : cameras[0].id;
-                    scanner.start(
-                        cameraId, 
-                        { fps: 10, qrbox: { width: 250, height: 250 } },
-                        onScanSuccess
-                    ).catch(err => {
-                        console.error("Scanner tracking crash: ", err);
-                    });
-                } else {
-                    alert("No imaging assets detected.");
-                }
-            }).catch(err => console.error("Hardware query fault: ", err));
-        }
-
-        function onScanSuccess(decodedText) {
-            if(audioFeedback) audioFeedback.play().catch(() => {});
-            
-            scanner.stop().then(() => {
-                reader.style.display = 'none';
-                panel.style.display = 'block';
-
-                let isOfficialCard = !isNaN(decodedText) || decodedText.startsWith("NCoS");
-                let parsedPayload = null;
-
-                try {
-                    parsedPayload = JSON.parse(decodedText);
-                    if(parsedPayload && parsedPayload.app === "VGN-Sentinel") {
-                        isOfficialCard = true;
-                    }
-                } catch(e) {}
-
-                if (isOfficialCard) {
-                    panel.className = "panel granted";
-                    document.getElementById('status-title').innerText = "✅ VALID CARD DETECTED";
-                    
-                    if(parsedPayload) {
-                        document.getElementById('visitor-details').innerText = `ID: ${parsedPayload.id}\nHolder: ${parsedPayload.owner}\nClass: ${parsedPayload.v}`;
-                        saveLog(parsedPayload.id, parsedPayload.owner, parsedPayload.v, "PVC/STICKER");
-                    } else {
-                        document.getElementById('visitor-details').innerText = `Card ID: ${decodedText}\nStatus: Verified Physical Asset`;
-                        saveLog(decodedText, "Guest Asset Holder", "NCoS Entry Channel", "GUEST");
-                    }
-                } else {
-                    panel.className = "panel denied";
-                    document.getElementById('status-title').innerText = "❌ UNKNOWN CODE";
-                    document.getElementById('visitor-details').innerText = `Scanned: ${decodedText}\nStatus: Not an NHQ Issued Card`;
-                }
-                
-                document.getElementById('timestamp').innerText = "Logged: " + new Date().toLocaleString();
+    Html5Qrcode.getCameras().then(cameras => {
+        if (cameras && cameras.length > 0) {
+            const cameraId = cameras.length > 1 ? cameras[1].id : cameras[0].id;
+            isScanning = true; // Set flag to true
+            scanner.start(
+                cameraId, 
+                { fps: 10, qrbox: { width: 250, height: 250 } },
+                onScanSuccess
+            ).catch(err => {
+                isScanning = false;
+                console.error("Scanner tracking crash: ", err);
             });
+        } else {
+            alert("No imaging assets detected.");
+        }
+    }).catch(err => console.error("Hardware query fault: ", err));
+}
+
+function stopCamera() {
+    if (!isScanning) return;
+    isScanning = false; // Reset flag immediately
+    scanner.stop().catch(() => {});
+}
+
+
+function onScanSuccess(decodedText) {
+    if (!isScanning) return; // Ignore incoming frames if already processing
+    isScanning = false; 
+
+    if (audioFeedback) audioFeedback.play().catch(() => {});
+    
+    scanner.stop().then(() => {
+        reader.style.display = 'none';
+        panel.style.display = 'block';
+
+        let parsedPayload = null;
+        let scannedId = decodedText.trim();
+        let isJson = false;
+
+        // Try to parse JSON data structures (Car Stickers / Decals)
+        try {
+            if (scannedId.startsWith('{')) {
+                parsedPayload = JSON.parse(scannedId);
+                if (parsedPayload && parsedPayload.id) {
+                    scannedId = parsedPayload.id;
+                    isJson = true;
+                }
+            }
+        } catch(e) {
+            console.log("Standard text fallback context.");
         }
 
-        function stopCamera() {
-            scanner.stop().catch(() => {});
+        // DATABASE VERIFICATION LAYER (Check against your vgn_registry)
+        const registry = JSON.parse(localStorage.getItem('vgn_registry') || '{}');
+        const registeredAsset = registry[scannedId];
+
+        // Access is strictly granted ONLY if the ID exists in database and is ACTIVE
+        if (registeredAsset && registeredAsset.status === 'ACTIVE') {
+            panel.className = "panel granted";
+            document.getElementById('status-title').innerText = "✅ VALID ACCESS DETECTED";
+            
+            if (isJson && parsedPayload) {
+                const assetType = (parsedPayload.type === 'pvc') ? 'PVC GATE PASS' : 'WINDSHIELD STICKER';
+                document.getElementById('visitor-details').innerHTML = `
+                    <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 10px; margin-top: 10px; text-align: left;">
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 8px;">
+                            <img src="logo.jpg" alt="Logo" style="width: 40px; height: 40px; object-fit: contain;">
+                            <div>
+                                <h4 style="margin: 0; color: #4caf50; font-size: 14px; letter-spacing:1px;">NIGERIA CORRECTIONAL SERVICE</h4>
+                                <p style="margin: 0; font-size: 10px; color: #aaa;">${assetType}</p>
+                            </div>
+                        </div>
+                        <p style="margin: 5px 0; font-size: 14px;"><b>Serial ID:</b> <span style="color: #ffb300;">${scannedId}</span></p>
+                        <p style="margin: 5px 0; font-size: 16px;"><b>Holder:</b> ${registeredAsset.holder || parsedPayload.owner || 'UNKNOWN'}</p>
+                        <p style="margin: 5px 0; font-size: 14px; color: #ddd;"><b>Vehicle/Target:</b> ${registeredAsset.vehicle || parsedPayload.v || 'N/A'}</p>
+                    </div>`;
+                saveLog(scannedId, registeredAsset.holder, registeredAsset.vehicle, assetType);
+            } else {
+                document.getElementById('visitor-details').innerHTML = `
+                    <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 10px; margin-top: 10px; text-align: left;">
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 8px;">
+                            <img src="logo.jpg" alt="Logo" style="width: 40px; height: 40px; object-fit: contain;">
+                            <div>
+                                <h4 style="margin: 0; color: #4caf50; font-size: 14px; letter-spacing:1px;">NIGERIA CORRECTIONAL SERVICE</h4>
+                                <p style="margin: 0; font-size: 10px; color: #aaa;">PHYSICAL SECURITY ASSET</p>
+                            </div>
+                        </div>
+                        <p style="margin: 5px 0; font-size: 15px;"><b>Card ID:</b> <span style="color: #ffb300;">${scannedId}</span></p>
+                        <p style="margin: 5px 0; font-size: 15px;"><b>Holder:</b> ${registeredAsset.holder}</p>
+                        <p style="margin: 5px 0; font-size: 13px; color: #ccc;"><b>Status:</b> Verified Active Database Asset</p>
+                    </div>`;
+                saveLog(scannedId, registeredAsset.holder, registeredAsset.vehicle, "PHYSICAL_CARD");
+            }
+        } else {
+            // Unregistered, revoked, or fake code fallback
+            panel.className = "panel denied";
+            document.getElementById('status-title').innerText = "❌ ACCESS DENIED / UNKNOWN ASSET";
+            document.getElementById('visitor-details').innerHTML = `
+                <div style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 10px; margin-top: 10px;">
+                    <p style="font-size: 16px; margin: 0 0 5px 0;">Scanned ID: <span style="color:#ff5252;">${scannedId}</span></p>
+                    <p style="font-size: 13px; color: #ff8a80; margin: 0;">Status Validation Failure: Not an authorized or active system asset.</p>
+                </div>`;
         }
+        
+        document.getElementById('timestamp').innerText = "Logged: " + new Date().toLocaleString();
+    }).catch(err => {
+        isScanning = true; // Reset if camera stop fails
+        console.error("Failed to stop scanner cleanly:", err);
+    });
+}
 
         function resetScanner() {
             panel.style.display = 'none';
