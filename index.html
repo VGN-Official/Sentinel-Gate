@@ -448,48 +448,41 @@ function onScanSuccess(decodedText) {
             }
         }
 
-        // 2. STAGE ACCESSIBILITY VALIDATION
-        // Access is strictly granted ONLY if the ID exists in database and is ACTIVE
+       // 2. STAGE ACCESSIBILITY VALIDATION (Unified Module Reader)
         if (registeredAsset && (registeredAsset.status === 'ACTIVE' || !registeredAsset.status)) {
             panel.className = "panel granted";
             document.getElementById('status-title').innerText = "✅ VALID ACCESS DETECTED";
             
+            // Dynamic variable extraction based on which form generated the asset
+            const cardHolder = registeredAsset.holder || registeredAsset.name || parsedPayload?.owner || 'UNKNOWN';
+            const cardTarget = registeredAsset.vehicle || registeredAsset.purpose || parsedPayload?.v || 'N/A';
+            
+            // Determine dynamic UI text layout badge
+            let assetType = 'GUEST PASS';
             if (isJson && parsedPayload) {
-                const assetType = (parsedPayload.type === 'pvc') ? 'PVC GATE PASS' : 'WINDSHIELD STICKER';
-                document.getElementById('visitor-details').innerHTML = `
-                    <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 10px; margin-top: 10px; text-align: left;">
-                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 8px;">
-                            <img src="logo.jpg" alt="Logo" style="width: 40px; height: 40px; object-fit: contain;">
-                            <div>
-                                <h4 style="margin: 0; color: #4caf50; font-size: 14px; letter-spacing:1px;">NIGERIA CORRECTIONAL SERVICE</h4>
-                                <p style="margin: 0; font-size: 10px; color: #aaa;">${assetType}</p>
-                            </div>
-                        </div>
-                        <p style="margin: 5px 0; font-size: 14px;"><b>Serial ID:</b> <span style="color: #ffb300;">${finalMatchedId}</span></p>
-                        <p style="margin: 5px 0; font-size: 16px;"><b>Holder:</b> ${registeredAsset.holder || parsedPayload.owner || 'UNKNOWN'}</p>
-                        <p style="margin: 5px 0; font-size: 14px; color: #ddd;"><b>Vehicle/Target:</b> ${registeredAsset.vehicle || parsedPayload.v || 'N/A'}</p>
-                    </div>`;
-                saveLog(finalMatchedId, registeredAsset.holder, registeredAsset.vehicle, assetType);
-            } else {
-                // UI layout render for Standard / Guest Passes
-                const passLabel = registeredAsset.type ? registeredAsset.type.toUpperCase() : 'GUEST PASS';
-                document.getElementById('visitor-details').innerHTML = `
-                    <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 10px; margin-top: 10px; text-align: left;">
-                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 8px;">
-                            <img src="logo.jpg" alt="Logo" style="width: 40px; height: 40px; object-fit: contain;">
-                            <div>
-                                <h4 style="margin: 0; color: #4caf50; font-size: 14px; letter-spacing:1px;">NIGERIA CORRECTIONAL SERVICE</h4>
-                                <p style="margin: 0; font-size: 10px; color: #aaa;">${passLabel}</p>
-                            </div>
-                        </div>
-                        <p style="margin: 5px 0; font-size: 15px;"><b>Card ID:</b> <span style="color: #ffb300;">${finalMatchedId}</span></p>
-                        <p style="margin: 5px 0; font-size: 15px;"><b>Holder:</b> ${registeredAsset.holder}</p>
-                        <p style="margin: 5px 0; font-size: 13px; color: #ccc;"><b>Purpose/Vehicle:</b> ${registeredAsset.vehicle || 'N/A'}</p>
-                    </div>`;
-                saveLog(finalMatchedId, registeredAsset.holder, registeredAsset.vehicle, passLabel);
+                assetType = (parsedPayload.type === 'pvc') ? 'PVC GATE PASS' : 'WINDSHIELD STICKER';
+            } else if (registeredAsset.type) {
+                assetType = registeredAsset.type.toUpperCase();
             }
+
+            // Universal layout execution window 
+            document.getElementById('visitor-details').innerHTML = `
+                <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 10px; margin-top: 10px; text-align: left;">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 8px;">
+                        <img src="logo.jpg" alt="Logo" style="width: 40px; height: 40px; object-fit: contain;">
+                        <div>
+                            <h4 style="margin: 0; color: #4caf50; font-size: 14px; letter-spacing:1px;">NIGERIA CORRECTIONAL SERVICE</h4>
+                            <p style="margin: 0; font-size: 10px; color: #aaa;">${assetType}</p>
+                        </div>
+                    </div>
+                    <p style="margin: 5px 0; font-size: 14px;"><b>Serial ID:</b> <span style="color: #ffb300;">${finalMatchedId}</span></p>
+                    <p style="margin: 5px 0; font-size: 16px;"><b>Holder:</b> ${cardHolder}</p>
+                    <p style="margin: 5px 0; font-size: 14px; color: #ddd;"><b>Target/Purpose:</b> ${cardTarget}</p>
+                </div>`;
+                
+            saveLog(finalMatchedId, cardHolder, cardTarget, assetType);
         } else {
-            // Unregistered, revoked, or fake code fallback
+            // Unregistered or revoked state validation fallback
             panel.className = "panel denied";
             document.getElementById('status-title').innerText = "❌ ACCESS DENIED / UNKNOWN ASSET";
             document.getElementById('visitor-details').innerHTML = `
@@ -501,150 +494,155 @@ function onScanSuccess(decodedText) {
         
         document.getElementById('timestamp').innerText = "Logged: " + new Date().toLocaleString();
     }).catch(err => {
-        isScanning = true; // Reset if camera stop fails
+        isScanning = true; 
         console.error("Failed to stop scanner cleanly:", err);
     });
 }
 
-        function resetScanner() {
-            panel.style.display = 'none';
-            reader.style.display = 'block';
-            start();
-        }
+function resetScanner() {
+    panel.style.display = 'none';
+    reader.style.display = 'block';
+    start();
+}
 
-        // Shared Localized Application Core Functions
-        function toggleFormInputs() {
-            const type = document.getElementById('cardType').value;
-            document.getElementById('additionalGroup').style.display = type === 'pvc' ? 'flex' : 'none';
-        }
+function toggleFormInputs() {
+    const type = document.getElementById('cardType').value;
+    document.getElementById('additionalGroup').style.display = type === 'pvc' ? 'flex' : 'none';
+}
 
-        function assignCard() {
-            const id = document.getElementById('cardID').value;
-            const name = document.getElementById('guestName').value;
-            const purpose = document.getElementById('visitPurpose').value;
+function assignCard() {
+    const id = document.getElementById('cardID').value;
+    const name = document.getElementById('guestName').value;
+    const purpose = document.getElementById('visitPurpose').value;
 
-            if(!id || !name) return alert("All fields required.");
+    if(!id || !name) return alert("All fields required.");
 
-            document.getElementById('renderTarget').innerHTML = "";
-            document.getElementById('printActionBtn').style.display = 'none';
+    document.getElementById('renderTarget').innerHTML = "";
+    document.getElementById('printActionBtn').style.display = 'none';
 
-            saveToLocalRegistry(id, { type: 'Guest Pass', holder: name, vehicle: purpose, status: 'ACTIVE' });
+    saveToLocalRegistry(id, { type: 'Guest Pass', holder: name, vehicle: purpose, status: 'ACTIVE' });
 
-            document.getElementById('printablePass').style.display = 'block';
-            document.getElementById('printGuestName').innerText = name.toUpperCase();
-            document.getElementById('printDetails').innerText = `DESTINATION: ${purpose}`;
-            
-            document.getElementById('printQR').innerHTML = "";
-            new QRCode(document.getElementById('printQR'), { text: id, width: 90, height: 90 });
+    document.getElementById('printablePass').style.display = 'block';
+    document.getElementById('printGuestName').innerText = name.toUpperCase();
+    document.getElementById('printDetails').innerText = `DESTINATION: ${purpose}`;
+    
+    document.getElementById('printQR').innerHTML = "";
+    new QRCode(document.getElementById('printQR'), { text: id, width: 90, height: 90 });
 
-            updateTable();
-            document.getElementById('cardID').value = ""; document.getElementById('guestName').value = ""; document.getElementById('visitPurpose').value = "";
-        }
+    updateTable();
+    document.getElementById('cardID').value = ""; 
+    document.getElementById('guestName').value = ""; 
+    document.getElementById('visitPurpose').value = "";
+}
 
-        function generateCard(event) {
-            if (event) event.preventDefault();
-            
-            const type = document.getElementById('cardType').value;
-            const passNo = document.getElementById('passNumber').value;
-            const agency = document.getElementById('agencyName').value;
-            const holder = document.getElementById('holderName').value;
-            const vehicle = document.getElementById('vehicleDetails').value;
-            const plate = document.getElementById('plateDetails') ? document.getElementById('plateDetails').value : '';
-            
-            document.getElementById('printablePass').style.display = 'none';
-            document.getElementById('printActionBtn').style.display = 'block';
+function generateCard(event) {
+    if (event) event.preventDefault();
+    
+    const type = document.getElementById('cardType').value;
+    const passNo = document.getElementById('passNumber').value;
+    const agency = document.getElementById('agencyName').value;
+    const holder = document.getElementById('holderName').value;
+    const vehicle = document.getElementById('vehicleDetails').value;
+    const plate = document.getElementById('plateDetails') ? document.getElementById('plateDetails').value : '';
+    
+    document.getElementById('printablePass').style.display = 'none';
+    document.getElementById('printActionBtn').style.display = 'block';
 
-            const payload = JSON.stringify({ app: "VGN-Sentinel", type: type, id: passNo, owner: holder, v: vehicle });
-            const renderTarget = document.getElementById('renderTarget');
+    const payload = JSON.stringify({ app: "VGN-Sentinel", type: type, id: passNo, owner: holder, v: vehicle });
+    const renderTarget = document.getElementById('renderTarget');
 
-            saveToLocalRegistry(passNo, { type: type === 'pvc' ? 'PVC Pass' : 'Sticker', holder: holder, vehicle: vehicle, status: 'ACTIVE' });
+    // Save to database
+    saveToLocalRegistry(passNo, { type: type === 'pvc' ? 'PVC Card' : 'Sticker', holder: holder, vehicle: vehicle, status: 'ACTIVE' });
 
-            if (type === 'pvc') {
-                renderTarget.innerHTML = `
-                    <div class="card-dual-wrapper" style="display:flex; gap:20px; flex-wrap:wrap;">
-                        <div class="pvc-landscape-card">
-                            <div class="pvc-front-border">
-                                <div class="pvc-front-header">
-                                    <img src="logo.jpg" alt="NCoS" class="ncos-badge-emblem" style="object-fit:contain;">
-                                    <div class="pvc-front-title-block">
-                                        <h4 class="pvc-front-title-main">${agency}</h4>
-                                        <p class="pvc-front-title-sub">OFFICIAL VEHICLE GATE ACCESS PASS</p>
-                                    </div>
-                                </div>
-                                <div class="pvc-front-body">
-                                    <div class="pvc-front-data">
-                                        <div class="pvc-text-bold-heavy">${holder}</div>
-                                        <div class="pvc-text-green-heavy">${vehicle}</div>
-                                        <div class="pvc-text-bold-heavy">${plate}</div>
-                                    </div>
-                                    <div class="pvc-front-qr-area">
-                                        <div class="qr-wrapper" id="tQRFront"></div>
-                                        <div class="pvc-front-serial">${passNo}</div>
-                                    </div>
-                                </div>
+    if (type === 'pvc') {
+        renderTarget.innerHTML = `
+            <div class="card-dual-wrapper" style="display:flex; gap:20px; flex-wrap:wrap;">
+                <div class="pvc-landscape-card">
+                    <div class="pvc-front-border">
+                        <div class="pvc-front-header">
+                            <img src="logo.jpg" alt="NCoS" class="ncos-badge-emblem" style="object-fit:contain;">
+                            <div class="pvc-front-title-block">
+                                <h4 class="pvc-front-title-main">${agency}</h4>
+                                <p class="pvc-front-title-sub">OFFICIAL VEHICLE GATE ACCESS PASS</p>
                             </div>
                         </div>
-                        <div class="pvc-landscape-card">
-                            <div class="pvc-back-content">
-                                <p class="pvc-back-notice">THIS VEHICLE PASS IS A PROPERTY OF NCoS (NHQ). IF LOST, A PENALTY IS INCURRED RANGING FROM A FINE OF N10,000 TO ANY OTHER AS DEEMED APPROPRIATE BY THE AUTHORITY.</p>
-                                <div class="pvc-back-footer">
-                                    <div class="pvc-back-warning">HANDLE WITH CAUTION!</div>
-                                    <div class="pvc-back-courtesy">Courtesy: SI&I Dept.<br>(NHQ)</div>
-                                </div>
+                        <div class="pvc-front-body">
+                            <div class="pvc-front-data">
+                                <div class="pvc-text-bold-heavy">${holder}</div>
+                                <div class="pvc-text-green-heavy">${vehicle}</div>
+                                <div class="pvc-text-bold-heavy">${plate}</div>
+                            </div>
+                            <div class="pvc-front-qr-area">
+                                <div class="qr-wrapper" id="tQRFront"></div>
+                                <div class="pvc-front-serial">${passNo}</div>
                             </div>
                         </div>
-                    </div>`;
-                new QRCode(document.getElementById("tQRFront"), { text: payload, width: 75, height: 75, colorDark: "#1b5e20" });
-            } else {
-                renderTarget.innerHTML = `
-                    <div class="sticker-card">
-                        <div class="sticker-header">
-                            <span class="sticker-title">VGN VEHICLE ACCESS</span>
-                            <i class="fa-solid fa-shield-halved" style="color:var(--vgn-green); font-size:1.5rem;"></i>
+                    </div>
+                </div>
+                <div class="pvc-landscape-card">
+                    <div class="pvc-back-content">
+                        <p class="pvc-back-notice">THIS VEHICLE PASS IS A PROPERTY OF NCoS (NHQ). IF LOST, A PENALTY IS INCURRED RANGING FROM A FINE OF N10,000 TO ANY OTHER AS DEEMED APPROPRIATE BY THE AUTHORITY.</p>
+                        <div class="pvc-back-footer">
+                            <div class="pvc-back-warning">HANDLE WITH CAUTION!</div>
+                            <div class="pvc-back-courtesy">Courtesy: SI&I Dept.<br>(NHQ)</div>
                         </div>
-                        <div class="sticker-body">
-                            <div class="sticker-details">
-                                <table>
-                                    <tr><td class="label">SERIAL PASS NO.</td></tr>
-                                    <tr><td style="font-size:1.2rem; color:#111;">${passNo}</td></tr>
-                                    <tr><td class="label">REGISTERED OWNER</td></tr>
-                                    <tr><td style="font-size:0.95rem;">${holder}</td></tr>
-                                    <tr><td class="label">VEHICLE CLASS / PLATE</td></tr>
-                                    <tr><td style="font-size:0.9rem; color:#444;">${vehicle}</td></tr>
-                                </table>
-                            </div>
-                            <div class="qr-wrapper" id="tQRSticker"></div>
-                        </div>
-                        <div class="sticker-footer">SECURE PARKING PROTOCOL REGISTERED</div>
-                    </div>`;
-                new QRCode(document.getElementById("tQRSticker"), { text: payload, width: 90, height: 90 });
-            }
-            saveToLocalRegistry(passNo, { type: type === 'pvc' ? 'PVC Card' : 'Sticker', holder: holder, vehicle: vehicle, status: 'ACTIVE' });
-            updateTable();
-        }
+                    </div>
+                </div>
+            </div>`;
+        new QRCode(document.getElementById("tQRFront"), { text: payload, width: 75, height: 75, colorDark: "#1b5e20" });
+    } else {
+        renderTarget.innerHTML = `
+            <div class="sticker-card">
+                <div class="sticker-header">
+                    <span class="sticker-title">VGN VEHICLE ACCESS</span>
+                    <i class="fa-solid fa-shield-halved" style="color:var(--vgn-green); font-size:1.5rem;"></i>
+                </div>
+                <div class="sticker-body">
+                    <div class="sticker-details">
+                        <table>
+                            <tr><td class="label">SERIAL PASS NO.</td></tr>
+                            <tr><td style="font-size:1.2rem; color:#111;">${passNo}</td></tr>
+                            <tr><td class="label">REGISTERED OWNER</td></tr>
+                            <tr><td style="font-size:0.95rem;">${holder}</td></tr>
+                            <tr><td class="label">VEHICLE CLASS / PLATE</td></tr>
+                            <tr><td style="font-size:0.9rem; color:#444;">${vehicle}</td></tr>
+                        </table>
+                    </div>
+                    <div class="qr-wrapper" id="tQRSticker"></div>
+                </div>
+                <div class="sticker-footer">SECURE PARKING PROTOCOL REGISTERED</div>
+            </div>`;
+        new QRCode(document.getElementById("tQRSticker"), { text: payload, width: 90, height: 90 });
+    }
+    updateTable();
+}
 
-        function saveToLocalRegistry(id, data) {
-            let reg = JSON.parse(localStorage.getItem('vgn_registry') || '{}');
-            reg[id] = data;
-            localStorage.setItem('vgn_registry', JSON.stringify(reg));
-        }
+function saveToLocalRegistry(id, data) {
+    let reg = JSON.parse(localStorage.getItem('vgn_registry') || '{}');
+    reg[id] = data;
+    localStorage.setItem('vgn_registry', JSON.stringify(reg));
+}
 
-        function clearCard(id) {
+function clearCard(id) {
     if(confirm(`Are you sure you want to revoke Access Assets for Card: ${id}?`)) {
-        const registry = JSON.parse(localStorage.getItem('vgn_registry') || '{}');
-        delete registry[id];
-        localStorage.setItem('vgn_registry', JSON.stringify(registry));
+        let reg = JSON.parse(localStorage.getItem('vgn_registry') || '{}');
+        delete reg[id];
+        localStorage.setItem('vgn_registry', JSON.stringify(reg));
+        
         updateTable();
+        document.getElementById('printablePass').style.display = 'none';
+        document.getElementById('renderTarget').innerHTML = "";
+        document.getElementById('printActionBtn').style.display = 'none';
     }
 }
 
-        function saveLog(id, holder, context, type) {
-            let logs = JSON.parse(localStorage.getItem('vgn_gate_logs') || '[]');
-            logs.push({ id, holder, context, type, time: new Date().toISOString() });
-            localStorage.setItem('vgn_gate_logs', JSON.stringify(logs));
-        }
+function saveLog(id, holder, context, type) {
+    let logs = JSON.parse(localStorage.getItem('vgn_gate_logs') || '[]');
+    logs.push({ id, holder, context, type, time: new Date().toISOString() });
+    localStorage.setItem('vgn_gate_logs', JSON.stringify(logs));
+}
 
-       function updateTable() {
+function updateTable() {
     const registry = JSON.parse(localStorage.getItem('vgn_registry') || '{}');
     const tbody = document.getElementById('logBody');
     if(!tbody) return; 
@@ -653,11 +651,9 @@ function onScanSuccess(decodedText) {
     for (let id in registry) {
         let currentProfile = registry[id];
         
-        // Dynamic normalization fallback for both Guest Cards and PVC/Stickers
         let displayType = currentProfile.type || 'GUEST PASS';
         let displayHolder = currentProfile.holder || 'UNKNOWN';
         let displayMeta = currentProfile.vehicle || 'N/A';
-        let displayStatus = currentProfile.status || 'ACTIVE';
         
         tbody.innerHTML += `<tr>
             <td><b>${id}</b></td>
@@ -669,30 +665,16 @@ function onScanSuccess(decodedText) {
     }
 }
 
-// Ensure the application draws current logs on initial startup frame execution
-window.onload = function() {
+// Framework Lifecycle Hook Initialization
+document.addEventListener("DOMContentLoaded", function() {
     updateTable();
-};
-        function clearCard(id) {
-            let reg = JSON.parse(localStorage.getItem('vgn_registry') || '{}');
-            delete reg[id];
-            localStorage.setItem('vgn_registry', JSON.stringify(reg));
-            updateTable();
-            document.getElementById('printablePass').style.display = 'none';
-            document.getElementById('renderTarget').innerHTML = "";
-            document.getElementById('printActionBtn').style.display = 'none';
-        }
+    toggleFormInputs();
+    start();
 
-        // Framework Lifecycle Hook Initialization
-        document.addEventListener("DOMContentLoaded", function() {
-            updateTable();
-            toggleFormInputs();
-            start();
-
-            if (sessionStorage.getItem('vgn_auth') === 'true') {
-                applyPermissions(true);
-            }
-        });
+    if (sessionStorage.getItem('vgn_auth') === 'true') {
+        applyPermissions(true);
+    }
+});
     </script>
 </body>
 </html>
