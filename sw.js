@@ -1,21 +1,29 @@
-const CACHE_NAME = 'sentinel-v2'; // Bump version to force reload
+const CACHE_NAME = 'sentinel-v3'; // Bumped version to break old cache cycles
 const ASSETS_TO_CACHE = [
-  './',                          // Cache root folder entry point
   './index.html',
   './reception-registry.html',
   './manifest.json',
-  './logo.jpg',                  // Explicitly add your icon image asset!
+  './logo.jpg', 
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
   'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js',
-  'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js' // Strict version path
+  'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js'
 ];
 
-// Install the Service Worker and Cache Files
+// Install the Service Worker and Cache Files safely
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('Caching Sentinel Assets');
-      return cache.addAll(ASSETS_TO_CACHE);
+      console.log('🛡️ Sentinel PWA: Starting asset pre-cache routine...');
+      
+      // Map all requests to intercept and log individual failures cleanly
+      return Promise.all(
+        ASSETS_TO_CACHE.map((url) => {
+          return cache.add(url).catch((err) => {
+            console.error(`❌ CRITICAL CACHE FAILURE on resource URL: ${url}`, err);
+            // This prevents a single network mismatch error from killing the service worker registration
+          });
+        })
+      );
     })
   );
 });
@@ -31,8 +39,21 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Fetching Logic (Offline First)
+// Fetching Logic (Offline First Engine layout match with system fallback)
 self.addEventListener('fetch', (event) => {
+  const url = new URL(event.request.url);
+
+  // If the browser requests the missing favicon, automatically serve the logo asset instead
+  if (url.pathname === '/favicon.ico') {
+    event.respondWith(
+      caches.match('./logo.jpg').then((cachedResponse) => {
+        return cachedResponse || fetch('./logo.jpg');
+      })
+    );
+    return;
+  }
+
+  // Standard caching query pipeline
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       return cachedResponse || fetch(event.request);
