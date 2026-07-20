@@ -1,8 +1,7 @@
-const CACHE_NAME = 'sentinel-v4'; // Bump version to clear out old cache
+const CACHE_NAME = 'sentinel-v5'; // Bumped version to clear old memory blocks
 const ASSETS_TO_CACHE = [
-  '/Sentinel-Gate/', // Cache the root path of the repo subfolder
+  '/Sentinel-Gate/', 
   '/Sentinel-Gate/index.html',
-  '/Sentinel-Gate/reception-registry.html', // Check case-sensitivity of this file!
   '/Sentinel-Gate/manifest.json',
   '/Sentinel-Gate/logo.jpg', 
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
