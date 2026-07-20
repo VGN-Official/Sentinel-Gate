@@ -1,9 +1,10 @@
-const CACHE_NAME = 'sentinel-v3'; // Bumped version to break old cache cycles
+const CACHE_NAME = 'sentinel-v4'; // Bump version to clear out old cache
 const ASSETS_TO_CACHE = [
-  './index.html',
-  './reception-registry.html',
-  './manifest.json',
-  './logo.jpg', 
+  '/Sentinel-Gate/', // Cache the root path of the repo subfolder
+  '/Sentinel-Gate/index.html',
+  '/Sentinel-Gate/reception-registry.html', // Check case-sensitivity of this file!
+  '/Sentinel-Gate/manifest.json',
+  '/Sentinel-Gate/logo.jpg', 
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
   'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js',
   'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js'

@@ -156,12 +156,12 @@
     <!-- Sentinel PWA Service Worker Hook Architecture initialization -->
     <script>
       if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js')
-            .then(reg => console.log('Sentinel PWA: Active', reg.scope))
-            .catch(err => console.log('Sentinel PWA: Offline Failure', err));
-        });
-      }
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/Sentinel-Gate/sw.js')
+                    .then(reg => console.log('Sentinel PWA: Active', reg.scope))
+                    .catch(err => console.error('Sentinel PWA: Failure', err));
+            });
+        }
 
       let deferredPrompt;
 
