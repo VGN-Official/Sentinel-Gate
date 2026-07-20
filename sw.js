@@ -1,10 +1,13 @@
-const CACHE_NAME = 'sentinel-v1';
+const CACHE_NAME = 'sentinel-v2'; // Bump version to force reload
 const ASSETS_TO_CACHE = [
+  './',                          // Cache root folder entry point
   './index.html',
   './reception-registry.html',
   './manifest.json',
-  'https://unpkg.com/html5-qrcode',
-  'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js'
+  './logo.jpg',                  // Explicitly add your icon image asset!
+  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
+  'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js',
+  'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js' // Strict version path
 ];
 
 // Install the Service Worker and Cache Files
