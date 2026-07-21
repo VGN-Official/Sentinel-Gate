@@ -3,7 +3,7 @@ const ASSETS_TO_CACHE = [
   '/Sentinel-Gate/', 
   '/Sentinel-Gate/index.html',
   '/Sentinel-Gate/manifest.json',
-  '/Sentinel-Gate/logo.jpg', 
+  '/Sentinel-Gate/logo.png', 
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
   'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js',
   'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js'
@@ -47,7 +47,7 @@ self.addEventListener('fetch', (event) => {
   if (url.pathname === '/favicon.ico') {
     event.respondWith(
       caches.match('./logo.jpg').then((cachedResponse) => {
-        return cachedResponse || fetch('./logo.jpg');
+        return cachedResponse || fetch('./logo.png');
       })
     );
     return;
