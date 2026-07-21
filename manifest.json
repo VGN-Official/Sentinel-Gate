@@ -1,24 +1,31 @@
 {
+  "id": "/Sentinel-Gate/index.html",
   "short_name": "SECURITY GATE TAGS",
   "name": "VGN Sentinel Security Protocol",
   "description": "Professional SOS and Access Control Terminal",
   "icons": [
     {
       "src": "logo.png",
-      "type": "image/jpeg",
+      "type": "image/png",
       "sizes": "192x192",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
-    { 
+    {
       "src": "logo.png",
-      "type": "image/jpeg",
+      "type": "image/png",
       "sizes": "512x512",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "logo.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "maskable"
     }
   ],
-  "start_url": "./index.html",
+  "start_url": "/Sentinel-Gate/index.html",
   "background_color": "#1a237e",
   "display": "standalone",
-  "scope": "./",
+  "scope": "/Sentinel-Gate/",
   "theme_color": "#1a237e"
-}  
+}
